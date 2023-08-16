@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using CorpseLib.Shell;
+using System.Reflection;
 
 namespace CorpseLib.Placeholder
 {
@@ -18,12 +19,17 @@ namespace CorpseLib.Placeholder
 
         public override string GetVariable(string name)
         {
-            int pos = name.IndexOf('.');
-            if (pos != -1)
+            OperationResult<List<string>> nameSplit = Helper.SplitCommand(name, '.');
+            if (!nameSplit)
+                return name;
+            List<string> variableFields = nameSplit.Result!;
+            if (variableFields.Count == 0)
+                return name;
+            string variableName = variableFields[0];
+            variableFields.RemoveAt(0);
+            if (m_Variables.TryGetValue(variableName, out object? obj))
             {
-                string variableName = name[..pos];
-                string variableField = name[(pos + 1)..];
-                if (m_Variables.TryGetValue(variableName, out object? obj))
+                foreach (var variableField in variableFields)
                 {
                     Type type = obj.GetType();
                     PropertyInfo? propertyInfo = type.GetProperty(variableField);
@@ -31,21 +37,30 @@ namespace CorpseLib.Placeholder
                     {
                         FieldInfo? fieldInfo = type.GetField(variableField);
                         if (fieldInfo == null)
-                            return name;
+                        {
+                            propertyInfo = type.GetProperty("Item");
+                            if (propertyInfo == null)
+                                return name;
+                            else
+                            {
+                                MethodInfo? getMethodInfo = propertyInfo.GetMethod;
+                                if (getMethodInfo != null && getMethodInfo.GetParameters().Length == 1 && getMethodInfo.GetParameters()[0].ParameterType == typeof(string))
+                                    obj = propertyInfo.GetValue(obj, new object[] { variableField });
+                                else
+                                    return name;
+                            }
+                        }
                         else
-                            return fieldInfo.GetValue(obj)?.ToString() ?? name;
+                            obj = fieldInfo.GetValue(obj);
                     }
                     else
-                        return propertyInfo.GetValue(obj, null)?.ToString() ?? name;
+                        obj = propertyInfo.GetValue(obj, null);
+                    if (obj == null)
+                        return name;
                 }
-                return name;
+                return obj.ToString() ?? name;
             }
-            else
-            {
-                if (m_Variables.TryGetValue(name, out object? obj))
-                    return obj.ToString() ?? name;
-                return name;
-            }
+            return name;
         }
     }
 }

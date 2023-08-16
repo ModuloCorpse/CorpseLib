@@ -20,6 +20,12 @@ namespace CorpseLib.Json
         public JObject() { }
         public JObject(JObject obj) => m_Children = obj.m_Children;
 
+        public object? this[string key]
+        {
+            get => Get<object?>(key);
+            set => Set(key, value);
+        }
+
         public bool ContainsKey(string key) => m_Children.ContainsKey(key);
 
         public object Get(string key, Type type)

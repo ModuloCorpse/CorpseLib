@@ -12,6 +12,7 @@
         private readonly string m_Content;
         private readonly Type m_Type;
 
+        public Dictionary<string, object> Properties => m_Properties;
         public string Content => m_Content;
         public Type SectionType => m_Type;
         public object this[string key] => m_Properties[key];
@@ -22,9 +23,6 @@
             m_Type = type;
         }
 
-        internal Section(string content, Type type, Dictionary<string, object> properties) : this(content, type)
-        {
-            m_Properties = properties;
-        }
+        internal Section(string content, Type type, Dictionary<string, object> properties) : this(content, type) => m_Properties = properties;
     }
 }

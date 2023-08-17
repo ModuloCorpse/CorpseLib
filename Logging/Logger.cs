@@ -25,11 +25,10 @@ namespace CorpseLib.Logging
         public void Add(IExtension extension) => m_Extensions.Add(extension);
         public void Add(Action<string> extension) => m_Extensions.Add(new LambdaExtension(extension));
 
-        public void Log(string logContent)
+        public void Log(string logContent, Context context)
         {
             if (m_Started)
             {
-                Context context = new();
                 DateTime now = DateTime.Now;
                 context.AddVariable("d", now.Day);
                 context.AddVariable("M", now.Month);
@@ -54,15 +53,10 @@ namespace CorpseLib.Logging
             }
         }
 
-        //Logger are not real Enumerator, they implement the interface to allow the list init when creating new Logger
-        public IEnumerator<IExtension> GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
+        public void Log(string logContent) => Log(logContent, new());
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
+        //Logger are not real Enumerator, they implement the interface to allow the list init when creating new Logger
+        public IEnumerator<IExtension> GetEnumerator() => throw new NotImplementedException();
+        IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
     }
 }

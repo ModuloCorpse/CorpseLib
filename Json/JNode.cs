@@ -12,5 +12,12 @@
         public string ToString(JFormat format) => ToString(new JBuilder(format));
         public override string ToString() => ToString(new JBuilder());
         public string ToNetworkString() => ToString(new JBuilder(JHelper.NETWORK_FORMAT));
+
+        public T? Cast<T>()
+        {
+            T? ret;
+            JHelper.Cast<T>(this, out ret);
+            return ret;
+        }
     }
 }

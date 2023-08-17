@@ -56,7 +56,7 @@ namespace CorpseLib.ManagedObject
             }
         }
 
-        protected T? CurrentObject => m_CurrentObject;
+        public T? CurrentObject => m_CurrentObject;
         public IReadOnlyList<T> Objects => m_Objects.Values.ToList().AsReadOnly();
         public IReadOnlyList<Object<T>.Info> ObjectsInfo => m_Objects.Select(pair => pair.Value.ObjectInfo).ToList().AsReadOnly();
         public string CurrentObjectID => (m_CurrentObject != null) ? m_CurrentObject.ID : string.Empty;

@@ -27,7 +27,7 @@
             return Convert.ChangeType(m_Value, type);
         }
 
-        public T? Cast<T>() => (T?)Cast(typeof(T));
+        public T? ValueCast<T>() => (T?)Cast(typeof(T));
 
         public override void ToJson(ref JBuilder builder)
         {

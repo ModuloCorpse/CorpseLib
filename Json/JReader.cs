@@ -43,17 +43,25 @@ namespace CorpseLib.Json
         private string ReadString()
         {
             StringBuilder stringBuilder = new();
-            char prev = '\0';
             while (m_Idx != m_Content.Length)
             {
                 char c = m_Content[++m_Idx];
-                if (c == '"' && prev != '\\')
+                if (c == '\\')
+                {
+                    c = m_Content[++m_Idx];
+                    switch (c)
+                    {
+                        case '"': stringBuilder.Append('\"'); break;
+                        default: stringBuilder.Append('\\'); stringBuilder.Append(c); break;
+                    }
+                }
+                else if (c == '"')
                 {
                     ++m_Idx;
                     return stringBuilder.ToString();
                 }
-                stringBuilder.Append(c);
-                prev = c;
+                else
+                    stringBuilder.Append(c);
             }
             throw new JException("Unclosed string");
         }

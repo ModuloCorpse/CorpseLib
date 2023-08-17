@@ -32,6 +32,8 @@ namespace CorpseLib.Placeholder
 
         private static string TreatVariable(string content, IContext context, ref Dictionary<string, List<FunctionResult>> fctResults)
         {
+            if (string.IsNullOrEmpty(content))
+                return string.Empty;
             if (content[0] == '@')
             {
                 if (content.Length > 1)

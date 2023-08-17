@@ -1,5 +1,4 @@
-﻿using CorpseLib.Serialize;
-using System.Collections;
+﻿using System.Collections;
 
 namespace CorpseLib.Json
 {
@@ -19,7 +18,7 @@ namespace CorpseLib.Json
                 JSerializer? serializer = JSerializer.GetSerializerFor(type);
                 if (serializer != null)
                 {
-                    OperationResult<object> result = serializer.DeserializeObj(jobj);
+                    OperationResult<object?> result = serializer.DeserializeObj(jobj);
                     if (result)
                     {
                         ret = result.Result;

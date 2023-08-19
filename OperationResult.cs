@@ -46,21 +46,16 @@
 
         public T? Result => m_Result;
 
-        public OperationResult(string error, string description): base(error, description)
-        {
-            m_Result = default;
-        }
-
-        public OperationResult(T? result): base()
-        {
-            m_Result = result;
-        }
+        public OperationResult(string error, string description): base(error, description) => m_Result = default;
+        public OperationResult(T? result): base() => m_Result = result;
 
         public OperationResult<U> Cast<U>()
         {
             if (m_Success)
             {
-                if (m_Result is U?)
+                if (m_Result == null)
+                    return new OperationResult<U>(default);
+                else if (m_Result is U?)
                     return new OperationResult<U>((U?)(object?)m_Result);
                 return new OperationResult<U>("Cast error", string.Format("Cannot cast from {0} to {1}", typeof(T).Name, typeof(U).Name));
             }

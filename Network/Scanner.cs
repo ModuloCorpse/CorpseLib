@@ -1,6 +1,6 @@
-﻿using System.Net.NetworkInformation;
+﻿using System.Collections.Concurrent;
 using System.Net;
-using System.Collections.Concurrent;
+using System.Net.NetworkInformation;
 
 namespace CorpseLib.Network
 {

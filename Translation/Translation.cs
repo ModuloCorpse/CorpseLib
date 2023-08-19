@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using CorpseLib.Ini;
+using System.Collections;
 using System.Globalization;
 using System.Text;
 
@@ -14,6 +15,22 @@ namespace CorpseLib.Translation
         public bool IsDefault => m_IsDefault;
 
         public Translation() => m_IsDefault = true;
+
+        public Translation(IniSection section)
+        {
+            string[] locals = section.Name.Split(',');
+            foreach (string local in locals)
+            {
+                string trimmedLocal = local.Trim();
+                if (trimmedLocal == "*")
+                    m_IsDefault = true;
+                else
+                    m_CultureInfos.Add(CultureInfo.GetCultureInfo(trimmedLocal));
+            }
+
+            foreach (KeyValuePair<string, string> pair in section)
+                m_Translations[new(pair.Key)] = pair.Value;
+        }
 
         public Translation(CultureInfo cultureInfo, bool isDefault = false)
         {
@@ -55,10 +72,9 @@ namespace CorpseLib.Translation
 
         public bool TryGetTranslation(TranslationKey key, out string? translation) => m_Translations.TryGetValue(key, out translation);
 
-        public override string ToString()
+        public string GetIniSectionName()
         {
             StringBuilder builder = new();
-            builder.Append('[');
             int i = 0;
             foreach (CultureInfo cultureInfo in m_CultureInfos)
             {
@@ -69,16 +85,15 @@ namespace CorpseLib.Translation
             }
             if (m_IsDefault)
                 builder.Append((i == 0) ? "*" : ", *");
-            builder.Append(']');
-            builder.AppendLine();
-            foreach (var pair in m_Translations)
-            {
-                builder.Append(pair.Key.Key);
-                builder.Append(':');
-                builder.Append(pair.Value);
-                builder.AppendLine();
-            }
             return builder.ToString();
+        }
+
+        public IniSection ToIniSection()
+        {
+            IniSection section = new(GetIniSectionName());
+            foreach (var pair in m_Translations)
+                section.Add(pair.Key.Key, pair.Value);
+            return section;
         }
 
         public IEnumerator<KeyValuePair<TranslationKey, string>> GetEnumerator() => m_Translations.GetEnumerator();

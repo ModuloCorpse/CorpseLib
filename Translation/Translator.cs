@@ -1,6 +1,6 @@
-﻿using CorpseLib.Placeholder;
+﻿using CorpseLib.Ini;
+using CorpseLib.Placeholder;
 using System.Globalization;
-using System.Text;
 
 namespace CorpseLib.Translation
 {
@@ -10,7 +10,7 @@ namespace CorpseLib.Translation
         private static readonly HashSet<CultureInfo> ms_AvailablesLanguages = new();
         private static readonly Translation ms_DefaultTranslation = new();
         private static Translation? ms_CurrentTranslation = null;
-        public static CultureInfo ms_CurrentLanguage = CultureInfo.CurrentUICulture;
+        private static CultureInfo ms_CurrentLanguage = CultureInfo.CurrentUICulture;
 
         public static event Action? CurrentLanguageChanged;
 
@@ -47,40 +47,13 @@ namespace CorpseLib.Translation
         {
             if (File.Exists(path))
             {
-                Translation? loadingTranslation = null;
                 string content = File.ReadAllText(path);
-                string[] lines = content.Split(Environment.NewLine);
-                for (int i = 0; i != lines.Length; ++i)
+                IniFile ini = IniFile.Parse(content);
+                if (!ini.HaveEmptySection)
                 {
-                    if (!string.IsNullOrEmpty(lines[i]))
-                    {
-                        if (lines[i][0] == '[' && lines[i][^1] == ']')
-                        {
-                            if (loadingTranslation != null)
-                                AddTranslation(loadingTranslation);
-                            string[] locals = lines[i][1..^1].Split(',');
-                            List<CultureInfo> cultureInfos = new();
-                            bool isDefault = false;
-                            foreach (string local in locals)
-                            {
-                                string trimmedLocal = local.Trim();
-                                if (trimmedLocal == "*")
-                                    isDefault = true;
-                                else
-                                    cultureInfos.Add(CultureInfo.GetCultureInfo(trimmedLocal));
-                            }
-                            loadingTranslation = new(cultureInfos.ToArray(), isDefault);
-                        }
-                        else
-                        {
-                            int keyPos = lines[i].IndexOf(':');
-                            if (keyPos != -1)
-                                loadingTranslation?.Add(lines[i][..keyPos].Trim(), lines[i][(keyPos + 1)..].Trim());
-                        }
-                    }
+                    foreach (IniSection section in ini)
+                        AddTranslation(new(section));
                 }
-                if (loadingTranslation != null)
-                    AddTranslation(loadingTranslation);
             }
         }
 
@@ -110,7 +83,7 @@ namespace CorpseLib.Translation
                 }
 
                 if (ms_CurrentTranslation == null && ms_CurrentLanguage == cultureInfo)
-                    ms_CurrentLanguage = cultureInfo;
+                    ms_CurrentTranslation = translation;
             }
             if (translation.IsDefault)
                 ms_DefaultTranslation.Merge(translation);
@@ -118,10 +91,10 @@ namespace CorpseLib.Translation
 
         public static void SaveToFile(string path)
         {
-            StringBuilder builder = new();
+            IniFile file = new();
             foreach (Translation translation in ms_Translations.Values)
-                builder.AppendLine(translation.ToString());
-            File.WriteAllText(path, builder.ToString().Trim());
+                file.AddSection(translation.ToIniSection());
+            File.WriteAllText(path, file.ToString().Trim());
         }
 
         public static void SaveToDir(string path)
@@ -137,7 +110,7 @@ namespace CorpseLib.Translation
                         fileName = "all";
                     else
                         fileName = "unknown";
-                    File.WriteAllText(Path.Join(path, fileName), translation.ToString().Trim());
+                    File.WriteAllText(Path.Join(path, fileName), translation.ToIniSection().ToString().Trim());
                 }
             }
         }

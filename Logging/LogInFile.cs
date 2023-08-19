@@ -8,6 +8,7 @@ namespace CorpseLib.Logging
         private readonly TimeSpan m_TimeBeforeFileNameReset;
         private readonly string m_FilePathFormat;
         private string m_FileName = string.Empty;
+        private readonly object m_Lock = new();
 
         public LogInFile(string filePathFormat, TimeSpan timeBeforeFileNameReset)
         {
@@ -68,21 +69,24 @@ namespace CorpseLib.Logging
                 m_FileName = GenerateFileName(now);
                 m_LastLogTime = now;
             }
-            StreamWriter fileStream;
-            if (!File.Exists(m_FileName))
+            lock (m_Lock)
             {
-                string? directoryPath = Path.GetDirectoryName(m_FileName);
-                if (!string.IsNullOrEmpty(directoryPath))
-                    Directory.CreateDirectory(directoryPath);
-                fileStream = new(File.Create(m_FileName));
-                fileStream.Write(m_FilePathFormat);
-                fileStream.WriteLine(m_LastLogTime);
+                StreamWriter fileStream;
+                if (!File.Exists(m_FileName))
+                {
+                    string? directoryPath = Path.GetDirectoryName(m_FileName);
+                    if (!string.IsNullOrEmpty(directoryPath))
+                        Directory.CreateDirectory(directoryPath);
+                    fileStream = new(File.Create(m_FileName));
+                    fileStream.Write(m_FilePathFormat);
+                    fileStream.WriteLine(m_LastLogTime);
+                }
+                else
+                    fileStream = File.AppendText(m_FileName);
+                fileStream.WriteLine(message);
+                fileStream.Flush();
+                fileStream.Close();
             }
-            else
-                fileStream = File.AppendText(m_FileName);
-            fileStream.WriteLine(message);
-            fileStream.Flush();
-            fileStream.Close();
         }
     }
 }

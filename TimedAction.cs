@@ -9,7 +9,7 @@ namespace CorpseLib
         public event EventHandler? OnStop;
         public event EventHandler? OnFinish;
 
-        private Stopwatch m_StopWatch = new();
+        private readonly Stopwatch m_StopWatch = new();
         private readonly long m_Duration;
         private readonly int m_RefreshInterval;
         private volatile bool m_Running;

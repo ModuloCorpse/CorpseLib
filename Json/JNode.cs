@@ -15,8 +15,7 @@
 
         public T? Cast<T>()
         {
-            T? ret;
-            JHelper.Cast<T>(this, out ret);
+            JHelper.Cast(this, out T? ret);
             return ret;
         }
     }

@@ -1,6 +1,6 @@
-﻿using System.Net.Sockets;
+﻿using CorpseLib.Serialize;
 using System.Net;
-using CorpseLib.Serialize;
+using System.Net.Sockets;
 
 namespace CorpseLib.Network
 {
@@ -93,7 +93,7 @@ namespace CorpseLib.Network
                         }
                     }
                 }
-            } catch
+            } catch (Exception ex)
             {
                 InternalDisconnect();
             }

@@ -361,6 +361,22 @@ namespace CorpseLib.Network
         /// </summary>
         public string Path => m_Path;
         /// <summary>
+        /// Path and query of the URL
+        /// </summary>
+        public string FullPath
+        {
+            get {
+                StringBuilder builder = new();
+                builder.Append(m_Path);
+                if (!string.IsNullOrEmpty(m_Query))
+                {
+                    builder.Append('?');
+                    builder.Append(m_Query);
+                }
+                return builder.ToString();
+            }
+        }
+        /// <summary>
         /// Fragment of the URL
         /// </summary>
         public string Query => m_Query;

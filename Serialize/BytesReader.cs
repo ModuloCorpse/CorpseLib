@@ -12,6 +12,8 @@ namespace CorpseLib.Serialize
         public BytesReader(byte[] bytes) => m_Bytes = bytes;
         public BytesReader(byte[] bytes, int idx) : this(bytes) => m_Idx = idx;
 
+        public int Length => m_Bytes.Length - m_Idx;
+
         public void Append(byte[] bytes) => Append(bytes, bytes.Length);
 
         public void Append(byte[] bytes, int nbBytes)
@@ -115,6 +117,18 @@ namespace CorpseLib.Serialize
             if (serializer == null)
                 return new("Read error", string.Format("No serializer found for {0}", typeof(T).Name));
             return serializer.DeserializeObj(this).Cast<T>();
+        }
+
+        public override string ToString()
+        {
+            StringBuilder sb = new();
+            sb.AppendLine("{");
+            sb.Append("Read: ");
+            sb.AppendLine(Encoding.UTF8.GetString(m_Bytes[..m_Idx]));
+            sb.Append("To read: ");
+            sb.AppendLine(Encoding.UTF8.GetString(m_Bytes[m_Idx..]));
+            sb.AppendLine("}");
+            return sb.ToString();
         }
     }
 }

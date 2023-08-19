@@ -4,7 +4,7 @@ namespace CorpseLib.Json
 {
     public class JHelper
     {
-        public static JFormat NETWORK_FORMAT = new()
+        public static readonly JFormat NETWORK_FORMAT = new()
         {
             InlineScope = true,
             DoLineBreak = false,

@@ -2,7 +2,6 @@
 
 namespace CorpseLib.Database
 {
-
     [DefaultSerializer]
     public class DBEntrySerializer : BytesSerializer<DB.Entry>
     {

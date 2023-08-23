@@ -15,6 +15,7 @@ namespace CorpseLib.Network
         protected abstract OperationResult<object> Read(BytesReader reader);
         protected virtual void Write(BytesWriter writer, object obj) => writer.Write(obj);
         protected abstract void Treat(object packet);
+        protected abstract void SetupSerializer(ref BytesSerializer serializer);
 
         //====================INTERNAL====================\\
         internal void SetClient(ATCPClient client) => m_Client = client;
@@ -22,6 +23,7 @@ namespace CorpseLib.Network
         internal void TreatPacket(object packet) => Treat(packet);
         internal void ClientConnected() => OnClientConnected();
         internal void ClientDisconnected() => OnClientDisconnected();
+        internal void FillSerializer(ref BytesSerializer serializer) => SetupSerializer(ref serializer);
 
         //====================PUBLIC====================\\
         public bool IsSynchronous() => !m_Client!.IsAsynchronous();
@@ -32,11 +34,13 @@ namespace CorpseLib.Network
         public bool IsServerSide() => m_Client!.IsServerSide();
         public void Disconnect() => m_Client!.Disconnect();
         public void Connect() => m_Client!.Connect();
+        public void Reconnect() => m_Client!.Reconnect();
+        public void SetMonitor(IMonitor monitor) => m_Client!.SetMonitor(monitor);
         public void Send(object msg)
         {
-            BytesWriter writer = new();
+            BytesWriter writer = new(m_Client!.BytesSerializer);
             Write(writer, msg);
-            m_Client!.WriteToStream(writer.Bytes);
+            m_Client.WriteToStream(writer.Bytes);
         }
     }
 }

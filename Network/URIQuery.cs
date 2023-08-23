@@ -99,7 +99,6 @@ namespace CorpseLib.Network
             if (m_Data.Count == 0)
                 return string.Empty;
             StringBuilder builder = new();
-            builder.Append('?');
             uint i = 0;
             foreach (KeyValuePair<string, string> data in m_Data)
             {

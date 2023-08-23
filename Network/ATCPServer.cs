@@ -1,5 +1,7 @@
-﻿using System.Net;
+﻿using System.Collections.Concurrent;
+using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace CorpseLib.Network
 {
@@ -11,12 +13,15 @@ namespace CorpseLib.Network
         public delegate AProtocol ProtocolFactory();
 
         private readonly ProtocolFactory m_ProtocolFactory;
-        private readonly Dictionary<int, ATCPClient> m_Clients = new();
+        private readonly ConcurrentDictionary<int, ATCPClient> m_Clients = new();
         private readonly List<int> m_FreeIdx = new();
         protected readonly Socket m_ServerSocket;
+        private IMonitor? m_Monitor = null;
         private int m_CurrentIdx = 0;
         private readonly int m_Port;
         private volatile bool m_Running = false;
+
+        public void SetMonitor(IMonitor monitor) => m_Monitor = monitor;
 
         public bool IsRunning() => m_Running;
 
@@ -37,10 +42,14 @@ namespace CorpseLib.Network
 
         protected void AddClient(ATCPClient client)
         {
+            if (!m_Running)
+                return;
+            if (m_Monitor != null)
+                client.SetMonitor(m_Monitor);
             client.OnDisconnect += delegate (ATCPClient client)
             {
                 int clientID = client.GetID();
-                m_Clients.Remove(clientID);
+                m_Clients.Remove(clientID, out var _);
                 m_FreeIdx.Add(clientID);
             };
             m_Clients[client.GetID()] = client;
@@ -79,11 +88,11 @@ namespace CorpseLib.Network
         {
             if (m_Running)
             {
+                m_Running = false;
                 foreach (var pair in m_Clients)
                     pair.Value.Disconnect();
                 m_Clients.Clear();
                 m_ServerSocket.Close();
-                m_Running = false;
             }
         }
 

@@ -4,15 +4,28 @@ namespace CorpseLib.Serialize
 {
     public class BytesReader
     {
+        private readonly BytesSerializer m_Serializer;
         private readonly Stack<int> m_Locks = new();
         private byte[] m_Bytes;
         private int m_Idx = 0;
 
-        public BytesReader() => m_Bytes = Array.Empty<byte>();
-        public BytesReader(byte[] bytes) => m_Bytes = bytes;
-        public BytesReader(byte[] bytes, int idx) : this(bytes) => m_Idx = idx;
+        public BytesReader(BytesSerializer serializer)
+        {
+            m_Serializer = serializer;
+            m_Bytes = Array.Empty<byte>();
+        }
 
+        public BytesReader(BytesSerializer serializer, byte[] bytes)
+        {
+            m_Serializer = serializer;
+            m_Bytes = bytes;
+        }
+        public BytesReader(BytesSerializer serializer, byte[] bytes, int idx) : this(serializer, bytes) => m_Idx = idx;
+
+        public BytesSerializer Serializer => m_Serializer;
         public int Length => m_Bytes.Length - m_Idx;
+
+        public byte[] Bytes => m_Bytes[m_Idx..];
 
         public void Append(byte[] bytes) => Append(bytes, bytes.Length);
 
@@ -113,7 +126,7 @@ namespace CorpseLib.Serialize
 
         public OperationResult<T> Read<T>()
         {
-            BytesSerializer? serializer = BytesSerializer.GetSerializerFor(typeof(T));
+            ABytesSerializer? serializer = m_Serializer.GetSerializerFor(typeof(T));
             if (serializer == null)
                 return new("Read error", string.Format("No serializer found for {0}", typeof(T).Name));
             return serializer.DeserializeObj(this).Cast<T>();

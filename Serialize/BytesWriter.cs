@@ -4,9 +4,13 @@ namespace CorpseLib.Serialize
 {
     public class BytesWriter
     {
+        private readonly BytesSerializer m_Serializer;
         private byte[] m_Bytes = Array.Empty<byte>();
 
+        public BytesSerializer Serializer => m_Serializer;
         public byte[] Bytes => m_Bytes;
+
+        public BytesWriter(BytesSerializer serializer) => m_Serializer = serializer;
 
         //byte
         public void Write(byte value)
@@ -53,7 +57,7 @@ namespace CorpseLib.Serialize
             Write(bytes);
         }
         public void Write(Guid guid) => Write(guid.ToByteArray());
-        public void Write<T>(T obj) => BytesSerializer.GetSerializerFor(typeof(T))?.SerializeObj(obj!, this);
-        public void Write(object obj) => BytesSerializer.GetSerializerFor(obj.GetType())?.SerializeObj(obj, this);
+        public void Write<T>(T obj) => m_Serializer.GetSerializerFor(typeof(T))?.SerializeObj(obj!, this);
+        public void Write(object obj) => m_Serializer.GetSerializerFor(obj.GetType())?.SerializeObj(obj, this);
     }
 }

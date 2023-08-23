@@ -2,8 +2,7 @@
 
 namespace CorpseLib.Database
 {
-    [DefaultSerializer]
-    public class DBEntrySerializer : BytesSerializer<DB.Entry>
+    public class DBEntrySerializer : ABytesSerializer<DB.Entry>
     {
         protected override OperationResult<DB.Entry> Deserialize(BytesReader reader)
         {
@@ -21,8 +20,7 @@ namespace CorpseLib.Database
         }
     }
 
-    [DefaultSerializer]
-    public class DBSerializer : BytesSerializer<DB>
+    public class DBSerializer : ABytesSerializer<DB>
     {
         protected override OperationResult<DB> Deserialize(BytesReader reader)
         {

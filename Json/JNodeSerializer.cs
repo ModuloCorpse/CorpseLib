@@ -3,8 +3,7 @@ using System.Text;
 
 namespace CorpseLib.Json
 {
-    [DefaultSerializer]
-    public class JNodeSerializer : BytesSerializer<JNode>
+    public class JNodeSerializer : ABytesSerializer<JNode>
     {
         protected override OperationResult<JNode> Deserialize(BytesReader reader)
         {

@@ -15,7 +15,8 @@ namespace CorpseLib.Json
         {
             if (token is JObject jobj)
             {
-                JSerializer? serializer = JSerializer.GetSerializerFor(type);
+                JSerializer jSerializer = new();
+                AJSerializer? serializer = jSerializer.GetSerializerFor(type);
                 if (serializer != null)
                 {
                     OperationResult<object?> result = serializer.DeserializeObj(jobj);
@@ -81,7 +82,8 @@ namespace CorpseLib.Json
         {
             if (item == null)
                 return new JNull();
-            JSerializer? serializer = JSerializer.GetSerializerFor(item.GetType());
+            JSerializer jSerializer = new();
+            AJSerializer? serializer = jSerializer.GetSerializerFor(item.GetType());
             if (serializer != null)
             {
                 JObject ret = new();

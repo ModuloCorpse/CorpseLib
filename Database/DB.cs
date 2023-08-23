@@ -28,12 +28,22 @@ namespace CorpseLib.Database
         }
 
         private readonly Dictionary<Guid, Entry> m_Entries = new();
+        private readonly BytesSerializer m_BytesSerializer = new();
+        private readonly EntrySerializer m_EntrySerializer = new();
 
         public event EventHandler<Guid>? EntryUpdated;
         public event EventHandler<Guid>? EntryAdded;
         public event EventHandler<Guid>? EntryRemoved;
 
         internal IEnumerable<Entry> Entries => m_Entries.Values;
+
+        public DB()
+        {
+            m_BytesSerializer.Register(new DBEntrySerializer());
+            m_BytesSerializer.Register(new DBSerializer());
+        }
+
+        public void RegisterSerializer(AEntrySerializer serializer) => m_EntrySerializer.Register(serializer);
 
         public Entry? GetEntry(Guid id) => m_Entries.TryGetValue(id, out Entry? entry) ? entry : null;
         public void Insert(Entry entry)
@@ -52,8 +62,8 @@ namespace CorpseLib.Database
 
         public void Insert(DBEntry entry)
         {
-            EntryWriter newWriter = new(this);
-            EntrySerializer.GetSerializerFor(entry.GetType())?.SerializeObj(entry, newWriter);
+            EntryWriter newWriter = new(m_BytesSerializer, m_EntrySerializer, this);
+            m_EntrySerializer.GetSerializerFor(entry.GetType())?.SerializeObj(entry, newWriter);
             byte[] entryBytes = newWriter.Bytes;
             if (m_Entries.TryGetValue(entry.ID, out Entry? storedEntry))
             {
@@ -72,8 +82,8 @@ namespace CorpseLib.Database
         {
             if (m_Entries.TryGetValue(id, out Entry? storedEntry))
             {
-                EntryReader reader = new(this, storedEntry.Content);
-                EntrySerializer? serializer = EntrySerializer.GetSerializerFor(typeof(T));
+                EntryReader reader = new(m_BytesSerializer, m_EntrySerializer, this, storedEntry.Content);
+                AEntrySerializer? serializer = m_EntrySerializer.GetSerializerFor(typeof(T));
                 if (serializer == null)
                     return new("Read error", string.Format("No serializer found for {0}", typeof(T).Name));
                 return serializer.DeserializeObj(reader).Cast<T>();
@@ -81,8 +91,18 @@ namespace CorpseLib.Database
             return new("No such entry", string.Format("No entry {0} in the database", id));
         }
 
-        public void Save(string path) => File.WriteAllBytes(path, BytesSerializer.Serialize(this));
-        public static DB Load(string path) => (File.Exists(path)) ? BytesSerializer.Deserialize<DB>(File.ReadAllBytes(path))! : new();
+        public void Save(string path) => File.WriteAllBytes(path, m_BytesSerializer.Serialize(this));
+        public static DB Load(string path)
+        {
+            if (File.Exists(path))
+            {
+                BytesSerializer bytesSerializer = new();
+                bytesSerializer.Register(new DBEntrySerializer());
+                bytesSerializer.Register(new DBSerializer());
+                return bytesSerializer.Deserialize<DB>(File.ReadAllBytes(path))!;
+            }
+            return new();
+        }
 
     }
 }

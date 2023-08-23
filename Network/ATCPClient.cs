@@ -17,8 +17,9 @@ namespace CorpseLib.Network
         private readonly URI m_URL;
         private Socket m_Socket;
         protected Stream m_Stream;
-        private readonly BytesReader m_BytesReader = new();
-        //private byte[] m_Buffer = Array.Empty<byte>();
+        private readonly BytesSerializer m_BytesSerializer = new();
+        private readonly BytesReader m_BytesReader;
+        private IMonitor? m_Monitor = null;
         private readonly int m_ID;
         private readonly bool m_IsServerSide;
         private bool m_IsConnected = false;
@@ -28,24 +29,29 @@ namespace CorpseLib.Network
         public bool IsConnected() => m_IsConnected;
         public bool IsServerSide() => m_IsServerSide;
 
-        public ATCPClient(AProtocol protocol, URI url, int id = 0)
+        private ATCPClient(AProtocol protocol, int id)
         {
-            m_ReconnectionTask = new(this);
             m_Protocol = protocol;
+            m_Protocol.FillSerializer(ref m_BytesSerializer);
+            m_BytesReader = new(m_BytesSerializer);
+            m_ReconnectionTask = new(this);
             protocol.SetClient(this);
             m_ID = id;
+            m_URL = new(string.Empty, null, string.Empty, string.Empty, string.Empty);
+            m_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            m_Stream = Stream.Null;
+        }
+
+        public ATCPClient(AProtocol protocol, URI url, int id = 0) : this(protocol, id)
+        {
             m_URL = url;
             m_IsServerSide = false;
             m_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             m_Stream = Stream.Null;
         }
 
-        internal ATCPClient(AProtocol protocol, int id, Socket socket)
+        internal ATCPClient(AProtocol protocol, int id, Socket socket) : this(protocol, id)
         {
-            m_ReconnectionTask = new(this);
-            m_Protocol = protocol;
-            protocol.SetClient(this);
-            m_ID = id;
             m_IsServerSide = true;
             m_IsConnected = true;
             m_Socket = socket;
@@ -57,13 +63,22 @@ namespace CorpseLib.Network
             m_Protocol.ClientConnected();
         }
 
+        internal BytesSerializer BytesSerializer => m_BytesSerializer;
+
+        public void SetMonitor(IMonitor monitor)
+        {
+            m_Monitor = monitor;
+            if (m_IsServerSide)
+                m_Monitor?.OnOpen();
+        }
+
         public void SetSelfReconnectionDelay(TimeSpan delay) => m_ReconnectionTask.SetDelay(delay);
         public void SetSelfReconnectionMaxNbTry(uint maxNbTry) => m_ReconnectionTask.SetMaxNbTry(maxNbTry);
         public void SetSelfReconnectionDelayAndMaxNbTry(TimeSpan delay, uint maxNbTry) => m_ReconnectionTask.SetDelayAndMaxNbTry(delay, maxNbTry);
         public void EnableSelfReconnection() => m_ReconnectionTask.Enable();
         public void DisableSelfReconnection() => m_ReconnectionTask.Disable();
 
-        public bool Connect() => Connect(TimeSpan.FromSeconds(1));
+        public bool Connect() => Connect(TimeSpan.FromMinutes(1));
         public bool Connect(TimeSpan timeout)
         {
             if (m_IsServerSide)
@@ -85,6 +100,7 @@ namespace CorpseLib.Network
                             m_Stream = new NetworkStream(m_Socket);
                             m_Protocol.ClientConnected();
                             m_IsConnected = true;
+                            m_Monitor?.OnOpen();
                             return true;
                         }
                         else
@@ -93,7 +109,7 @@ namespace CorpseLib.Network
                         }
                     }
                 }
-            } catch (Exception ex)
+            } catch
             {
                 InternalDisconnect();
             }
@@ -102,10 +118,12 @@ namespace CorpseLib.Network
 
         protected List<object> Received(byte[] readBuffer, int bytesRead)
         {
+            m_Monitor?.OnReceive(readBuffer[..bytesRead]);
             m_BytesReader.Append(readBuffer, bytesRead);
             while (bytesRead == readBuffer.Length)
             {
                 bytesRead = m_Stream.Read(readBuffer, 0, readBuffer.Length);
+                m_Monitor?.OnReceive(readBuffer[..bytesRead]);
                 m_BytesReader.Append(readBuffer, bytesRead);
             }
             List<object> packets = new();
@@ -121,6 +139,7 @@ namespace CorpseLib.Network
                     if (resultData != null)
                     {
                         packets.Add(resultData);
+                        m_Monitor?.OnReceive(resultData);
                         m_Protocol.TreatPacket(resultData);
                     }
                     readSuccess = true;
@@ -136,7 +155,11 @@ namespace CorpseLib.Network
 
         public abstract List<object> Read();
 
-        public void Send(object message) => m_Protocol.Send(message);
+        public void Send(object message)
+        {
+            m_Monitor?.OnSend(message);
+            m_Protocol.Send(message);
+        }
 
         internal void WriteToStream(byte[] message)
         {
@@ -144,6 +167,7 @@ namespace CorpseLib.Network
             {
                 m_Stream.Write(message);
                 m_Stream.Flush();
+                m_Monitor?.OnSend(message);
             } catch
             {
                 InternalDisconnect();
@@ -153,18 +177,13 @@ namespace CorpseLib.Network
         internal void SetStream(Stream stream) => m_Stream = stream;
         internal Stream GetStream() => m_Stream;
 
-        private void AttemptReconnect(int attemptCount)
-        {
-            Thread.Sleep(1000); //Use member
-            if (!Connect())
-                AttemptReconnect(attemptCount + 1);
-        }
-
         protected void InternalDisconnect()
         {
             if (Disconnect())
-                m_ReconnectionTask?.Start();
+                Reconnect();
         }
+
+        public void Reconnect() => m_ReconnectionTask?.Start();
 
         public bool Disconnect()
         {
@@ -174,6 +193,7 @@ namespace CorpseLib.Network
                 OnDisconnect?.Invoke(this);
                 m_Socket.Close();
                 m_Stream.Close();
+                m_Monitor?.OnClose();
                 return true;
             }
             return false;

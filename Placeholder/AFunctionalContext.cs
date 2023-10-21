@@ -20,17 +20,13 @@
                 m_Functions[pair.Key] = pair.Value;
         }
 
-        public bool Call(string functionName, string[] args, out string ret)
+        public string? Call(string functionName, string[] args)
         {
             if (m_Functions.TryGetValue(functionName, out Function? func))
-            {
-                ret = func(args);
-                return true;
-            }
-            ret = string.Empty;
-            return false;
+                return func(args);
+            return null;
         }
 
-        public abstract string GetVariable(string name);
+        public abstract string? GetVariable(string name);
     }
 }

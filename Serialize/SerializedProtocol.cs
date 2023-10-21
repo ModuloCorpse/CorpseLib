@@ -5,6 +5,7 @@ namespace CorpseLib.Serialize
     public abstract class SerializedProtocol<T> : AProtocol
     {
         protected override void OnClientConnected() { }
+        protected override void OnClientReconnected() { }
         protected override void OnClientDisconnected() { }
 
         protected sealed override OperationResult<object> Read(BytesReader reader) => reader.Read<T>().Cast<object>();

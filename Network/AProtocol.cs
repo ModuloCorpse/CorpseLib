@@ -11,19 +11,26 @@ namespace CorpseLib.Network
         protected void SetStream(Stream stream) => m_Client!.SetStream(stream);
         protected Stream GetStream() => m_Client!.GetStream();
         protected abstract void OnClientConnected();
+        protected abstract void OnClientReset();
+        protected abstract void OnClientReconnected();
         protected abstract void OnClientDisconnected();
         protected abstract OperationResult<object> Read(BytesReader reader);
         protected virtual void Write(BytesWriter writer, object obj) => writer.Write(obj);
         protected abstract void Treat(object packet);
         protected abstract void SetupSerializer(ref BytesSerializer serializer);
+        protected virtual void OnDiscardException(Exception exception) { }
+        protected void SetNewURL(URI newUrl) => m_Client?.SetNewURL(newUrl);
 
         //====================INTERNAL====================\\
         internal void SetClient(ATCPClient client) => m_Client = client;
         internal OperationResult<object> ReadFromStream(BytesReader reader) => Read(reader);
         internal void TreatPacket(object packet) => Treat(packet);
         internal void ClientConnected() => OnClientConnected();
+        internal void ClientReset() => OnClientReset();
+        internal void ClientReconnected() => OnClientReconnected();
         internal void ClientDisconnected() => OnClientDisconnected();
         internal void FillSerializer(ref BytesSerializer serializer) => SetupSerializer(ref serializer);
+        internal void DiscardException(Exception exception) => OnDiscardException(exception);
 
         //====================PUBLIC====================\\
         public bool IsSynchronous() => !m_Client!.IsAsynchronous();
@@ -31,6 +38,7 @@ namespace CorpseLib.Network
         public URI GetURL() => m_Client!.GetURL();
         public int GetID() => m_Client!.GetID();
         public bool IsConnected() => m_Client!.IsConnected();
+        public bool IsReconnecting() => m_Client!.IsReconnecting();
         public bool IsServerSide() => m_Client!.IsServerSide();
         public void Disconnect() => m_Client!.Disconnect();
         public void Connect() => m_Client!.Connect();

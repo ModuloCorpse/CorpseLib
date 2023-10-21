@@ -11,6 +11,22 @@ namespace CorpseLib.Network
 
         public void SetReadTimeout(int milliseconds) => m_ReadTimeout = milliseconds;
 
+        protected override void HandleReconnect()
+        {
+            uint tryCount = 0;
+            while (tryCount < MaxNbTry)
+            {
+                if (tryCount != 0)
+                    Thread.Sleep(Delay);
+                ++tryCount;
+                if (InternalConnect(TimeSpan.FromMinutes(1), true) || tryCount >= MaxNbTry)
+                {
+                    SetIsReconnecting(false);
+                    return;
+                }
+            }
+        }
+
         public override List<object> Read()
         {
             m_Stream.ReadTimeout = m_ReadTimeout;
@@ -20,9 +36,20 @@ namespace CorpseLib.Network
                 int bytesRead = m_Stream.Read(readBuffer, 0, readBuffer.Length);
                 if (bytesRead > 0)
                     return Received(readBuffer, bytesRead);
-            } catch { }
+            }
+            catch (Exception ex)
+            {
+                DiscardException(ex);
+            }
             InternalDisconnect();
             return new();
+        }
+
+        protected override void HandleActionAfterReconnect(Action action)
+        {
+            while (IsReconnecting())
+                Thread.Sleep(Delay);
+            action();
         }
 
         public override bool IsAsynchronous() => false;

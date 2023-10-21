@@ -22,20 +22,20 @@ namespace CorpseLib.Json
 
         public object? this[string key]
         {
-            get => Get<object?>(key);
+            get => Get<object>(key);
             set => Set(key, value);
         }
 
         public bool ContainsKey(string key) => m_Children.ContainsKey(key);
 
-        public object Get(string key, Type type)
+        public object? Get(string key, Type type)
         {
             if (TryGet(key, type, out object? ret))
-                return ret!;
+                return ret;
             throw new JException(string.Format("No node {0} in the JSON", key));
         }
 
-        public T Get<T>(string key) => (T)Get(key, typeof(T));
+        public T? Get<T>(string key) => (T?)Get(key, typeof(T));
 
         public object? GetOrDefault(string key, Type type, object? defaultReturn)
         {
@@ -44,7 +44,8 @@ namespace CorpseLib.Json
             return defaultReturn;
         }
 
-        public T? GetOrDefault<T>(string key, T? defaultReturn) => (T?)GetOrDefault(key, typeof(T), defaultReturn);
+        public T? GetOrDefault<T>(string key) => (T?)GetOrDefault(key, typeof(T), default(T));
+        public T GetOrDefault<T>(string key, T defaultReturn) => (T)GetOrDefault(key, typeof(T), defaultReturn)!;
 
         public bool TryGet(string key, Type type, out object? ret)
         {
@@ -100,9 +101,9 @@ namespace CorpseLib.Json
                 m_Children[key] = JHelper.Cast(obj);
         }
 
-        public void Set(string key, object[] obj) => m_Children[key] = ToArray(obj);
+        public void Set(string key, object?[] obj) => m_Children[key] = ToArray(obj);
 
-        public void Add(string name, JNode child) => m_Children[name] = child;
+        public void Add(string name, JNode? child) => m_Children[name] = child ?? new JNull();
         public void Add(string key, object? obj) => Set(key, obj);
 
         public JNode? Get(string name) => m_Children.GetValueOrDefault(name);

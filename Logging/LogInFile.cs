@@ -26,6 +26,8 @@ namespace CorpseLib.Logging
                 pathToDir = ".";
             string fileNameToUse = string.Empty;
             DateTime dateTimeToUse = DateTime.MinValue;
+            if (!Directory.Exists(pathToDir))
+                Directory.CreateDirectory(pathToDir);
             foreach (string file in Directory.GetFiles(pathToDir))
             {
                 string firstLine = File.ReadLines(file).First();
@@ -41,7 +43,6 @@ namespace CorpseLib.Logging
             }
             if (!string.IsNullOrEmpty(fileNameToUse))
             {
-                Console.WriteLine("Found file {0} with date time {1}", fileNameToUse, dateTimeToUse);
                 m_LastLogTime = dateTimeToUse;
                 m_FileName = fileNameToUse;
             }

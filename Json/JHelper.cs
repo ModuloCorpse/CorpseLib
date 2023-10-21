@@ -30,7 +30,7 @@ namespace CorpseLib.Json
                 }
             }
 
-            if (token.GetType() == type)
+            if (token.GetType().IsAssignableTo(type))
             {
                 ret = token;
                 return true;

@@ -1,6 +1,8 @@
-﻿namespace CorpseLib.Json
+﻿using CorpseLib.Placeholder;
+
+namespace CorpseLib.Json
 {
-    public class JValue : JNode
+    public class JValue : JNode, Context.IVariable
     {
         private readonly object m_Value;
 
@@ -8,6 +10,7 @@
         public JValue(JValue value) => m_Value = value.m_Value;
 
         public Type Type => m_Value.GetType();
+        public object Value => m_Value;
 
         public object? Cast(Type type)
         {
@@ -42,5 +45,7 @@
             else
                 builder.AppendValue(m_Value!.ToString()!.Replace(',', '.'));
         }
+
+        public string ToVariableString() => m_Value.ToString() ?? string.Empty;
     }
 }

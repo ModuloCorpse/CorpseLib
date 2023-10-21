@@ -2,7 +2,7 @@
 {
     public interface IContext
     {
-        public bool Call(string functionName, string[] args, out string ret);
-        public string GetVariable(string name);
+        public string? Call(string functionName, string[] args);
+        public string? GetVariable(string name);
     }
 }

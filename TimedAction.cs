@@ -18,6 +18,12 @@ namespace CorpseLib
         public int RefreshInterval => m_RefreshInterval;
         public bool Running => m_Running;
 
+        public TimedAction(int refreshIntervalInMilliseconds)
+        {
+            m_RefreshInterval = refreshIntervalInMilliseconds;
+            m_Duration = -1;
+        }
+
         public TimedAction(int refreshIntervalInMilliseconds, long durationInMilliseconds)
         {
             m_RefreshInterval = refreshIntervalInMilliseconds;
@@ -43,7 +49,7 @@ namespace CorpseLib
         {
             long ellapsed = m_StopWatch.ElapsedMilliseconds;
             OnActionUpdate(ellapsed);
-            if (ellapsed >= m_Duration)
+            if (m_Duration >= 0 && ellapsed >= m_Duration)
             {
                 m_Running = false;
                 m_StopWatch.Stop();

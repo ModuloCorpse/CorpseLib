@@ -27,6 +27,13 @@ namespace CorpseLib.Serialize
 
         public byte[] Bytes => m_Bytes[m_Idx..];
 
+        public void Clear()
+        {
+            m_Bytes = Array.Empty<byte>();
+            m_Locks.Clear();
+            m_Idx = 0;
+        }
+
         public void Append(byte[] bytes) => Append(bytes, bytes.Length);
 
         public void Append(byte[] bytes, int nbBytes)

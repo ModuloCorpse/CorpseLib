@@ -5,28 +5,38 @@ using System.Net.Sockets;
 namespace CorpseLib.Network
 {
     /// <summary>
-    /// Class representing an asynchronous TCP client
+    /// Class representing a TCP client
     /// </summary>
     public abstract class ATCPClient
     {
         public delegate void Callback(ATCPClient client);
         public event Callback? OnDisconnect;
 
-        private readonly ReconnectionTask m_ReconnectionTask;
         private readonly AProtocol m_Protocol;
-        private readonly URI m_URL;
+        private URI m_URL;
+        private URI? m_NewURL = null;
         private Socket m_Socket;
         protected Stream m_Stream;
         private readonly BytesSerializer m_BytesSerializer = new();
         private readonly BytesReader m_BytesReader;
         private IMonitor? m_Monitor = null;
+        private TimeSpan m_Delay = TimeSpan.Zero;
+        private uint m_MaxNbTry = 1;
         private readonly int m_ID;
         private readonly bool m_IsServerSide;
+        private volatile bool m_IsReconnecting = false;
+        private volatile bool m_IsReconnectionEnabled = false;
         private bool m_IsConnected = false;
+
+        protected TimeSpan Delay => m_Delay;
+        protected uint MaxNbTry => m_MaxNbTry;
+
+        protected void SetIsReconnecting(bool isReconnecting) => m_IsReconnecting = isReconnecting;
 
         public URI GetURL() => m_URL;
         public int GetID() => m_ID;
         public bool IsConnected() => m_IsConnected;
+        public bool IsReconnecting() => m_IsReconnecting;
         public bool IsServerSide() => m_IsServerSide;
 
         private ATCPClient(AProtocol protocol, int id)
@@ -34,7 +44,6 @@ namespace CorpseLib.Network
             m_Protocol = protocol;
             m_Protocol.FillSerializer(ref m_BytesSerializer);
             m_BytesReader = new(m_BytesSerializer);
-            m_ReconnectionTask = new(this);
             protocol.SetClient(this);
             m_ID = id;
             m_URL = new(string.Empty, null, string.Empty, string.Empty, string.Empty);
@@ -65,6 +74,8 @@ namespace CorpseLib.Network
 
         internal BytesSerializer BytesSerializer => m_BytesSerializer;
 
+        protected void DiscardException(Exception ex) => m_Protocol.DiscardException(ex);
+
         public void SetMonitor(IMonitor monitor)
         {
             m_Monitor = monitor;
@@ -72,14 +83,30 @@ namespace CorpseLib.Network
                 m_Monitor?.OnOpen();
         }
 
-        public void SetSelfReconnectionDelay(TimeSpan delay) => m_ReconnectionTask.SetDelay(delay);
-        public void SetSelfReconnectionMaxNbTry(uint maxNbTry) => m_ReconnectionTask.SetMaxNbTry(maxNbTry);
-        public void SetSelfReconnectionDelayAndMaxNbTry(TimeSpan delay, uint maxNbTry) => m_ReconnectionTask.SetDelayAndMaxNbTry(delay, maxNbTry);
-        public void EnableSelfReconnection() => m_ReconnectionTask.Enable();
-        public void DisableSelfReconnection() => m_ReconnectionTask.Disable();
+        protected abstract void HandleActionAfterReconnect(Action action);
 
-        public bool Connect() => Connect(TimeSpan.FromMinutes(1));
-        public bool Connect(TimeSpan timeout)
+        private void WaitForReconnection(Action action)
+        {
+            if (!m_IsReconnecting)
+            {
+                action();
+                return;
+            }
+            HandleActionAfterReconnect(action);
+        }
+
+        public void SetSelfReconnectionDelay(TimeSpan delay) => WaitForReconnection(() => m_Delay = delay);
+        public void SetSelfReconnectionMaxNbTry(uint maxNbTry) => WaitForReconnection(() => m_MaxNbTry = maxNbTry);
+        public void SetSelfReconnectionDelayAndMaxNbTry(TimeSpan delay, uint maxNbTry) => WaitForReconnection(() =>
+        {
+            m_Delay = delay;
+            m_MaxNbTry = maxNbTry;
+        });
+
+        public void EnableSelfReconnection() => m_IsReconnectionEnabled = true;
+        public void DisableSelfReconnection() => m_IsReconnectionEnabled = false;
+
+        protected bool InternalConnect(TimeSpan timeout, bool reconnect)
         {
             if (m_IsServerSide)
                 return false;
@@ -88,6 +115,11 @@ namespace CorpseLib.Network
                 //Recreate socket and reset stream to allow reconnection
                 m_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 m_Stream = Stream.Null;
+                if (m_NewURL != null)
+                {
+                    m_URL = m_NewURL;
+                    m_NewURL = null;
+                }
                 foreach (IPAddress ip in Dns.GetHostEntry(m_URL.Host).AddressList)
                 {
                     if (ip.AddressFamily == AddressFamily.InterNetwork)
@@ -98,7 +130,10 @@ namespace CorpseLib.Network
                         {
                             m_Socket.EndConnect(result);
                             m_Stream = new NetworkStream(m_Socket);
-                            m_Protocol.ClientConnected();
+                            if (!reconnect)
+                                m_Protocol.ClientConnected();
+                            else
+                                m_Protocol.ClientReconnected();
                             m_IsConnected = true;
                             m_Monitor?.OnOpen();
                             return true;
@@ -109,12 +144,32 @@ namespace CorpseLib.Network
                         }
                     }
                 }
-            } catch
+            }
+            catch (Exception ex)
             {
+                DiscardException(ex);
                 InternalDisconnect();
             }
             return false;
         }
+
+        protected abstract void HandleReconnect();
+
+        public void Reconnect()
+        {
+            if (m_IsReconnectionEnabled && !m_IsReconnecting)
+            {
+                m_BytesReader.Clear();
+                m_Socket.Close();
+                m_Stream.Close();
+                m_Protocol.ClientReset();
+                m_IsReconnecting = true;
+                HandleReconnect();
+            }
+        }
+
+        public bool Connect() => Connect(TimeSpan.FromMinutes(1));
+        public bool Connect(TimeSpan timeout) => InternalConnect(timeout, false);
 
         protected List<object> Received(byte[] readBuffer, int bytesRead)
         {
@@ -168,12 +223,15 @@ namespace CorpseLib.Network
                 m_Stream.Write(message);
                 m_Stream.Flush();
                 m_Monitor?.OnSend(message);
-            } catch
+            }
+            catch (Exception ex)
             {
+                DiscardException(ex);
                 InternalDisconnect();
             }
         }
 
+        internal void SetNewURL(URI newUrl) => m_NewURL = newUrl;
         internal void SetStream(Stream stream) => m_Stream = stream;
         internal Stream GetStream() => m_Stream;
 
@@ -183,14 +241,13 @@ namespace CorpseLib.Network
                 Reconnect();
         }
 
-        public void Reconnect() => m_ReconnectionTask?.Start();
-
         public bool Disconnect()
         {
             if (m_IsConnected)
             {
                 m_IsConnected = false;
                 OnDisconnect?.Invoke(this);
+                m_Protocol.ClientDisconnected();
                 m_Socket.Close();
                 m_Stream.Close();
                 m_Monitor?.OnClose();

@@ -5,6 +5,11 @@ namespace CorpseLib.Placeholder
 {
     public class Context : AFunctionalContext
     {
+        public interface IVariable
+        {
+            public string ToVariableString();
+        }
+
         private readonly Dictionary<string, object> m_Variables = new();
 
         public Context() : base() {}
@@ -17,14 +22,14 @@ namespace CorpseLib.Placeholder
                 m_Variables[pair.Key] = pair.Value;
         }
 
-        public override string GetVariable(string name)
+        public override string? GetVariable(string name)
         {
             OperationResult<List<string>> nameSplit = Helper.SplitCommand(name, '.');
             if (!nameSplit)
-                return name;
+                return null;
             List<string> variableFields = nameSplit.Result!;
             if (variableFields.Count == 0)
-                return name;
+                return null;
             string variableName = variableFields[0];
             variableFields.RemoveAt(0);
             if (m_Variables.TryGetValue(variableName, out object? obj))
@@ -40,14 +45,14 @@ namespace CorpseLib.Placeholder
                         {
                             propertyInfo = type.GetProperty("Item");
                             if (propertyInfo == null)
-                                return name;
+                                return null;
                             else
                             {
                                 MethodInfo? getMethodInfo = propertyInfo.GetMethod;
                                 if (getMethodInfo != null && getMethodInfo.GetParameters().Length == 1 && getMethodInfo.GetParameters()[0].ParameterType == typeof(string))
                                     obj = propertyInfo.GetValue(obj, new object[] { variableField });
                                 else
-                                    return name;
+                                    return null;
                             }
                         }
                         else
@@ -56,11 +61,13 @@ namespace CorpseLib.Placeholder
                     else
                         obj = propertyInfo.GetValue(obj, null);
                     if (obj == null)
-                        return name;
+                        return null;
                 }
-                return obj.ToString() ?? name;
+                if (obj is IVariable variableObj)
+                    return variableObj.ToVariableString();
+                return obj.ToString();
             }
-            return name;
+            return null;
         }
     }
 }

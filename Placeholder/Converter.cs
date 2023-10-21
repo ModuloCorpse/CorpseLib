@@ -30,7 +30,7 @@ namespace CorpseLib.Placeholder
             internal string Result => m_Result;
         }
 
-        private static string TreatVariable(string content, IContext context, ref Dictionary<string, List<FunctionResult>> fctResults)
+        private static string TreatVariable(string content, IContext[] contexts, ref Dictionary<string, List<FunctionResult>> fctResults)
         {
             if (string.IsNullOrEmpty(content))
                 return string.Empty;
@@ -53,7 +53,7 @@ namespace CorpseLib.Placeholder
                 string functionVariables = content[(pos + 1)..content.LastIndexOf(')')];
                 List<string> argumentsList = new();
                 foreach (string functionVariable in functionVariables.Split(','))
-                    argumentsList.Add(TreatVariable(functionVariable.Trim(), context, ref fctResults));
+                    argumentsList.Add(TreatVariable(functionVariable.Trim(), contexts, ref fctResults));
                 string[] arguments = argumentsList.ToArray();
                 if (fctResults.TryGetValue(functionName, out var fctResult))
                 {
@@ -63,20 +63,29 @@ namespace CorpseLib.Placeholder
                             return functionResult.Result;
                     }
                 }
-
-                if (context.Call(functionName, arguments, out string ret))
+                foreach (IContext context in contexts)
                 {
-                    if (!fctResults.ContainsKey(functionName))
-                        fctResults[functionName] = new();
-                    fctResults[functionName].Add(new(arguments, ret));
-                    return ret;
+                    string? ret = context.Call(functionName, arguments);
+                    if (ret != null)
+                    {
+                        if (!fctResults.ContainsKey(functionName))
+                            fctResults[functionName] = new();
+                        fctResults[functionName].Add(new(arguments, ret));
+                        return ret;
+                    }
                 }
                 return content;
             }
-            return context.GetVariable(content);
+            foreach (IContext context in contexts)
+            {
+                string? variable = context.GetVariable(content);
+                if (variable != null)
+                    return variable;
+            }
+            return content;
         }
 
-        public static string Convert(string str, IContext context)
+        public static string Convert(string str, params IContext[] context)
         {
             if (string.IsNullOrWhiteSpace(str))
                 return str;

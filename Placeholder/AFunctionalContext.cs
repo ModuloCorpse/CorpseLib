@@ -20,7 +20,7 @@
                 m_Functions[pair.Key] = pair.Value;
         }
 
-        public string? Call(string functionName, string[] args)
+        public virtual string? Call(string functionName, string[] args)
         {
             if (m_Functions.TryGetValue(functionName, out Function? func))
                 return func(args);

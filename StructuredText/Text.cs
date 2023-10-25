@@ -1,15 +1,23 @@
-﻿using System.Collections;
+﻿using CorpseLib.Json;
+using System.Collections;
 using System.Text;
 
 namespace CorpseLib.StructuredText
 {
     public class Text : IEnumerable<Section>
     {
+        public class JSerializer : AJSerializer<Text>
+        {
+            protected override OperationResult<Text> Deserialize(JObject reader) => new(new(reader.GetList<Section>("sections")));
+            protected override void Serialize(Text obj, JObject writer) => writer["sections"] = obj.m_Sections;
+        }
+
         private readonly List<Section> m_Sections = new();
 
         public Text() { }
         public Text(string text) => AddText(text);
         public Text(string text, Dictionary<string, object> properties) => AddText(text, properties);
+        internal Text(List<Section> sections) => m_Sections = sections;
 
         public void AddImage(string url) => m_Sections.Add(new(url, Section.Type.IMAGE));
         public void AddImage(string url, Dictionary<string, object> properties) => m_Sections.Add(new(url, Section.Type.IMAGE, properties));

@@ -23,7 +23,7 @@ namespace CorpseLib.Json
         public object? this[string key]
         {
             get => Get<object>(key);
-            set => Set(key, value);
+            set => Add(key, value);
         }
 
         public bool ContainsKey(string key) => m_Children.ContainsKey(key);
@@ -84,27 +84,10 @@ namespace CorpseLib.Json
 
         public List<T> GetList<T>(string key) => GetList(key, typeof(T)).Cast<T>().ToList();
 
-        private static JArray ToArray(IEnumerable arr)
-        {
-            JArray ret = new();
-            foreach (object item in arr)
-                ret.Add(JHelper.Cast(item));
-            return ret;
-        }
+        [Obsolete("Please use Add instead of Set")]
+        public void Set(string key, object? obj) => m_Children[key] = JHelper.Cast(obj);
 
-
-        public void Set(string key, object? obj)
-        {
-            if (obj is IList arr)
-                m_Children[key] = ToArray(arr);
-            else
-                m_Children[key] = JHelper.Cast(obj);
-        }
-
-        public void Set(string key, object?[] obj) => m_Children[key] = ToArray(obj);
-
-        public void Add(string name, JNode? child) => m_Children[name] = child ?? new JNull();
-        public void Add(string key, object? obj) => Set(key, obj);
+        public void Add(string key, object? obj) => m_Children[key] = JHelper.Cast(obj);
 
         public JNode? Get(string name) => m_Children.GetValueOrDefault(name);
 

@@ -77,7 +77,10 @@ namespace CorpseLib.ManagedObject
                     {
                         JFile json = JFile.LoadFromFile(file);
                         if (objID == "settings")
+                        {
                             currentID = json.GetOrDefault("current", string.Empty);
+                            LoadSettings(json);
+                        }
                         else
                         {
                             if (m_Objects.ContainsKey(objID))
@@ -120,7 +123,8 @@ namespace CorpseLib.ManagedObject
                 Directory.CreateDirectory(m_DirPath);
 
             JFile json = new();
-            json.Set("current", m_CurrentObject?.ID ?? string.Empty);
+            json.Add("current", m_CurrentObject?.ID ?? string.Empty);
+            SaveSettings(ref json);
             json.WriteToFile(string.Format("{0}/settings.json", m_DirPath));
 
             foreach (var obj in m_Objects.Values)
@@ -137,5 +141,8 @@ namespace CorpseLib.ManagedObject
         }
 
         protected abstract T? DeserializeObject(JFile obj);
+
+        protected virtual void LoadSettings(JFile obj) { }
+        protected virtual void SaveSettings(ref JFile obj) { }
     }
 }

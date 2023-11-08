@@ -23,10 +23,7 @@
             m_Success = true;
         }
 
-        public static implicit operator bool(OperationResult result)
-        {
-            return result.m_Success;
-        }
+        public static implicit operator bool(OperationResult result) => result.m_Success;
 
         public override string ToString()
         {

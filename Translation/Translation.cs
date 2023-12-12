@@ -7,8 +7,8 @@ namespace CorpseLib.Translation
 {
     public class Translation : IEnumerable<KeyValuePair<TranslationKey, string>>
     {
-        private readonly Dictionary<TranslationKey, string> m_Translations = new();
-        private readonly HashSet<CultureInfo> m_CultureInfos = new();
+        private readonly Dictionary<TranslationKey, string> m_Translations = [];
+        private readonly HashSet<CultureInfo> m_CultureInfos = [];
         private readonly bool m_IsDefault;
 
         public CultureInfo[] CultureInfos => m_CultureInfos.ToArray();

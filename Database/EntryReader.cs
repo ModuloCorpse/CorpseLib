@@ -2,18 +2,11 @@
 
 namespace CorpseLib.Database
 {
-    public class EntryReader
+    public class EntryReader(BytesSerializer serializer, EntrySerializer entrySerializer, DB dB, byte[] bytes)
     {
-        private readonly DB m_DB;
-        private readonly BytesReader m_BytesReader;
-        private readonly EntrySerializer m_EntrySerializer;
-
-        public EntryReader(BytesSerializer serializer, EntrySerializer entrySerializer, DB dB, byte[] bytes)
-        {
-            m_DB = dB;
-            m_BytesReader = new(serializer, bytes);
-            m_EntrySerializer = entrySerializer;
-        }
+        private readonly DB m_DB = dB;
+        private readonly BytesReader m_BytesReader = new(serializer, bytes);
+        private readonly EntrySerializer m_EntrySerializer = entrySerializer;
 
         public void RemoveReadBytes() => m_BytesReader.RemoveReadBytes();
         public void LockIdx() => m_BytesReader.LockIdx();
@@ -64,7 +57,7 @@ namespace CorpseLib.Database
 
         public OperationResult<T?[]> ReadArray<T>()
         {
-            List<T?> list = new();
+            List<T?> list = [];
             int count = m_BytesReader.ReadInt();
             for (int i = 0; i < count; ++i)
             {
@@ -74,12 +67,12 @@ namespace CorpseLib.Database
                 else
                     return new(result.Error, result.Description);
             }
-            return new(list.ToArray());
+            return new([.. list]);
         }
 
         public OperationResult<object?[]> ReadArray(Type type)
         {
-            List<object?> list = new();
+            List<object?> list = [];
             int count = m_BytesReader.ReadInt();
             for (int i = 0; i < count; ++i)
             {
@@ -89,7 +82,7 @@ namespace CorpseLib.Database
                 else
                     return new(result.Error, result.Description);
             }
-            return new(list.ToArray());
+            return new([.. list]);
         }
     }
 }

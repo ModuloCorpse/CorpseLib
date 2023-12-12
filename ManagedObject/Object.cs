@@ -4,15 +4,10 @@ namespace CorpseLib.ManagedObject
 {
     public abstract class Object<CRTP> where CRTP : Object<CRTP>
     {
-        public class Info
+        public class Info(string id, string name)
         {
-            private readonly string m_ID;
-            private readonly string m_Name;
-            public Info(string id, string name)
-            {
-                m_ID = id;
-                m_Name = name;
-            }
+            private readonly string m_ID = id;
+            private readonly string m_Name = name;
             public string ID => m_ID;
             public string Name => m_Name;
             public override string ToString() => m_Name;
@@ -50,9 +45,11 @@ namespace CorpseLib.ManagedObject
 
         internal JFile Serialize()
         {
-            JFile json = new();
-            json.Add("id", ID);
-            json.Add("name", Name);
+            JFile json = new()
+            {
+                { "id", ID },
+                { "name", Name }
+            };
             if (m_Parent != null)
                 json.Add("parent", m_Parent.ID);
             JObject obj = json;

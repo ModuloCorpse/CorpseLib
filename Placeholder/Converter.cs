@@ -51,10 +51,10 @@ namespace CorpseLib.Placeholder
                 int pos = content.IndexOf('(');
                 string functionName = content[..pos];
                 string functionVariables = content[(pos + 1)..content.LastIndexOf(')')];
-                List<string> argumentsList = new();
+                List<string> argumentsList = [];
                 foreach (string functionVariable in functionVariables.Split(','))
                     argumentsList.Add(TreatVariable(functionVariable.Trim(), contexts, ref fctResults));
-                string[] arguments = argumentsList.ToArray();
+                string[] arguments = [.. argumentsList];
                 if (fctResults.TryGetValue(functionName, out var fctResult))
                 {
                     foreach (FunctionResult functionResult in fctResult)
@@ -69,7 +69,7 @@ namespace CorpseLib.Placeholder
                     if (ret != null)
                     {
                         if (!fctResults.ContainsKey(functionName))
-                            fctResults[functionName] = new();
+                            fctResults[functionName] = [];
                         fctResults[functionName].Add(new(arguments, ret));
                         return ret;
                     }
@@ -91,8 +91,8 @@ namespace CorpseLib.Placeholder
                 return str;
             bool isVariable = false;
             char previous = '\0';
-            Dictionary<string, string> treatedVariables = new();
-            Dictionary<string, List<FunctionResult>> results = new();
+            Dictionary<string, string> treatedVariables = [];
+            Dictionary<string, List<FunctionResult>> results = [];
             StringBuilder builder = new();
             StringBuilder variableBuilder = new();
             foreach (char c in str)

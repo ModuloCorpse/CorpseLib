@@ -12,7 +12,7 @@ namespace CorpseLib.StructuredText
             protected override void Serialize(Text obj, JObject writer) => writer["sections"] = obj.m_Sections;
         }
 
-        private readonly List<Section> m_Sections = new();
+        private readonly List<Section> m_Sections = [];
 
         public Text() { }
         public Text(string text) => AddText(text);

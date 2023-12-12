@@ -1,12 +1,9 @@
 ﻿namespace CorpseLib.Translation
 {
-    public class TranslationKey
+    public class TranslationKey(string key)
     {
-        private readonly string m_Key;
-
+        private readonly string m_Key = key;
         public string Key => m_Key;
-
-        public TranslationKey(string key) => m_Key = key;
 
         public override string ToString() => Translator.Translate("${" + m_Key + "}");
         public string ToString(params object[] args) => Translator.Translate("${" + m_Key + "}", args);

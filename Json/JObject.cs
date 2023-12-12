@@ -6,7 +6,7 @@ namespace CorpseLib.Json
     {
         public static JObject Parse(string content)
         {
-            JObject obj = new();
+            JObject obj = [];
             if (!string.IsNullOrEmpty(content))
             {
                 JReader reader = new(content);
@@ -15,7 +15,7 @@ namespace CorpseLib.Json
             return obj;
         }
 
-        private readonly Dictionary<string, JNode> m_Children = new();
+        private readonly Dictionary<string, JNode> m_Children = [];
 
         public JObject() { }
         public JObject(JObject obj) => m_Children = obj.m_Children;
@@ -69,7 +69,7 @@ namespace CorpseLib.Json
 
         public List<object> GetList(string key, Type type)
         {
-            List<object> ret = new();
+            List<object> ret = [];
             JNode? token = m_Children.GetValueOrDefault(key);
             if (token != null && token is JArray arr)
             {

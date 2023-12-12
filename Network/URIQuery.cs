@@ -5,7 +5,7 @@ namespace CorpseLib.Network
 {
     public class URIQuery : IEnumerable<KeyValuePair<string, string>>
     {
-        private readonly Dictionary<string, string> m_Data = new();
+        private readonly Dictionary<string, string> m_Data = [];
         private readonly char m_Delimiter;
 
         public URIQuery(char delimiter) => m_Delimiter = delimiter;

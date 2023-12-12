@@ -4,7 +4,7 @@
     {
         public delegate string Function(string[] args);
 
-        private readonly Dictionary<string, Function> m_Functions = new();
+        private readonly Dictionary<string, Function> m_Functions = [];
 
         protected AFunctionalContext()
         {

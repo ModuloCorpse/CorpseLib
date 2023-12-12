@@ -2,12 +2,10 @@
 
 namespace CorpseLib.Json
 {
-    public class JReader
+    public class JReader(string content)
     {
-        private readonly string m_Content;
+        private readonly string m_Content = content.Trim();
         private int m_Idx = 0;
-
-        public JReader(string content) => m_Content = content.Trim();
 
         private static bool IsWhitespace(char c) => c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\v' || c == '\f';
 
@@ -224,7 +222,7 @@ namespace CorpseLib.Json
 
         private JArray ReadArray()
         {
-            JArray array = new();
+            JArray array = [];
             ReadArray(array);
             return array;
         }
@@ -260,7 +258,7 @@ namespace CorpseLib.Json
 
         private JObject ReadObject()
         {
-            JObject obj = new();
+            JObject obj = [];
             ReadObject(obj);
             return obj;
         }

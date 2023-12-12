@@ -8,15 +8,15 @@ namespace CorpseLib.Shell
         {
             OperationResult<List<string>> result = SplitCommand(input, separator);
             if (result)
-                return result.Result!.ToArray();
-            return Array.Empty<string>();
+                return [.. result.Result!];
+            return [];
         }
 
         public static OperationResult<List<string>> SplitCommand(string content, char separator = ' ')
         {
             if (separator == '"' || separator == '\'' || separator == '\\')
                 return new("Bad split call", "Separator cannot be a '\"', a ''' or a '\\'");
-            List<string> result = new();
+            List<string> result = [];
             bool inString = false;
             StringBuilder builder = new();
             int i = 0;

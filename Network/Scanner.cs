@@ -6,28 +6,19 @@ namespace CorpseLib.Network
 {
     public class Scanner
     {
-        public class Result
+        public class Result(URI url, string hostName)
         {
-            private readonly URI m_URL;
-            private readonly string m_HostName;
-
+            private readonly URI m_URL = url;
+            private readonly string m_HostName = hostName;
             public URI URL => m_URL;
             public string HostName => m_HostName;
-
-            public Result(URI url, string hostName)
-            {
-                m_URL = url;
-                m_HostName = hostName;
-            }
         }
 
-        private class ScannerData
+        private class ScannerData(IPTest? iPTest)
         {
             private readonly Guid m_CounterGuid = ThreadCounter.NewCounter();
-            private readonly ConcurrentBag<Result> m_IPS = new();
-            private readonly IPTest? m_IPTest;
-
-            public ScannerData(IPTest? iPTest) => m_IPTest = iPTest;
+            private readonly ConcurrentBag<Result> m_IPS = [];
+            private readonly IPTest? m_IPTest = iPTest;
 
             public void AddPing() => ThreadCounter.IncreaseCounter(m_CounterGuid);
             public void PingCompleted() => ThreadCounter.DecreaseCounter(m_CounterGuid);
@@ -35,7 +26,7 @@ namespace CorpseLib.Network
 
             public void AddIP(string hostName, string host)
             {
-                List<int> ports = new();
+                List<int> ports = [];
                 if (m_IPTest?.Invoke(host, ref ports) ?? true)
                 {
                     if (ports.Count == 0)
@@ -62,7 +53,7 @@ namespace CorpseLib.Network
 
         private static List<byte> GetRange(string range)
         {
-            List<byte> ret = new();
+            List<byte> ret = [];
             if (range[0] == '[' && range[^1] == ']')
             {
                 if (range == "[]")
@@ -188,9 +179,9 @@ namespace CorpseLib.Network
 
         public IReadOnlyCollection<Result> Scan(IPTest? ipTest = null)
         {
-            ConcurrentBag<Result> results = new();
+            ConcurrentBag<Result> results = [];
             IterateOverFirstRange(results, ipTest);
-            List<Result> ret = new();
+            List<Result> ret = [];
             while (results.TryTake(out Result? result))
                 ret.Add(result);
             ret.Sort((x, y) => string.Compare(x.URL.Host, y.URL.Host));

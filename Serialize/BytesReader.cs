@@ -12,7 +12,7 @@ namespace CorpseLib.Serialize
         public BytesReader(BytesSerializer serializer)
         {
             m_Serializer = serializer;
-            m_Bytes = Array.Empty<byte>();
+            m_Bytes = [];
         }
 
         public BytesReader(BytesSerializer serializer, byte[] bytes)
@@ -29,7 +29,7 @@ namespace CorpseLib.Serialize
 
         public void Clear()
         {
-            m_Bytes = Array.Empty<byte>();
+            m_Bytes = [];
             m_Locks.Clear();
             m_Idx = 0;
         }
@@ -49,7 +49,7 @@ namespace CorpseLib.Serialize
             if (m_Bytes.Length > m_Idx)
                 m_Bytes = m_Bytes[m_Idx..];
             else
-                m_Bytes = Array.Empty<byte>();
+                m_Bytes = [];
             m_Locks.Clear();
             m_Idx = 0;
         }

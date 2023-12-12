@@ -5,7 +5,7 @@ namespace CorpseLib.Ini
 {
     public class IniSection : IEnumerable<KeyValuePair<string, string>>
     {
-        private readonly Dictionary<string, string> m_Properties = new();
+        private readonly Dictionary<string, string> m_Properties = [];
         private readonly string m_Name;
 
         public string Name => m_Name;

@@ -4,7 +4,7 @@
     {
         private class SearchTreeNode<UPathType, UValueType> where UPathType : notnull
         {
-            private readonly Dictionary<UPathType, SearchTreeNode<UPathType, UValueType>> m_Children = new();
+            private readonly Dictionary<UPathType, SearchTreeNode<UPathType, UValueType>> m_Children = [];
             private bool m_HasValue = false;
             private UValueType? m_Value = default;
             private ulong m_MaxDepth = 0;
@@ -58,7 +58,7 @@
 
             private void CleanNode()
             {
-                List<UPathType> keyToRemove = new();
+                List<UPathType> keyToRemove = [];
                 foreach (var pair in m_Children)
                 {
                     if (!pair.Value.HaveValue())
@@ -154,7 +154,7 @@
         public List<TValueType> Get(TKeyType key)
         {
             TPathType[] path = ConvertKey(key);
-            List<TValueType> ret = new();
+            List<TValueType> ret = [];
             if (path.Length == 0)
                 m_Root.Fill(ref ret);
             else
@@ -165,7 +165,7 @@
         public List<TValueType> Search(TKeyType key)
         {
             TPathType[] path = ConvertKey(key);
-            List<TValueType> ret = new();
+            List<TValueType> ret = [];
             if (path.Length == 0)
                 m_Root.Fill(ref ret);
             else

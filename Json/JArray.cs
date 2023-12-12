@@ -3,7 +3,7 @@
     public class JArray : JNode, IEnumerable<JNode>
     {
         private Type? m_ArrayType = null;
-        private readonly List<JNode> m_Children = new();
+        private readonly List<JNode> m_Children = [];
 
         public JArray() { }
 

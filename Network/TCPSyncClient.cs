@@ -42,7 +42,7 @@ namespace CorpseLib.Network
                 DiscardException(ex);
             }
             InternalDisconnect();
-            return new();
+            return [];
         }
 
         protected override void HandleActionAfterReconnect(Action action)

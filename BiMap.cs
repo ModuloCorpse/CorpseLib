@@ -7,8 +7,8 @@ namespace CorpseLib
         where TFirst : notnull
         where TSecond : notnull
     {
-        private readonly Dictionary<TFirst, TSecond> m_FtoS = new();
-        private readonly Dictionary<TSecond, TFirst> m_StoF = new();
+        private readonly Dictionary<TFirst, TSecond> m_FtoS = [];
+        private readonly Dictionary<TSecond, TFirst> m_StoF = [];
 
         public TSecond GetF(TFirst key) => m_FtoS[key];
         public void SetS(TFirst key, TSecond value) => Add(key, value);
@@ -41,9 +41,9 @@ namespace CorpseLib
 
         public bool RemoveF(TFirst key)
         {
-            if (m_FtoS.ContainsKey(key))
+            if (m_FtoS.TryGetValue(key, out TSecond? stofToRemove))
             {
-                m_StoF.Remove(m_FtoS[key]);
+                m_StoF.Remove(stofToRemove);
                 return m_FtoS.Remove(key);
             }
             return false;
@@ -51,9 +51,9 @@ namespace CorpseLib
 
         public bool RemoveS(TSecond key)
         {
-            if (m_StoF.ContainsKey(key))
+            if (m_StoF.TryGetValue(key, out TFirst? ftosToRemove))
             {
-                m_FtoS.Remove(m_StoF[key]);
+                m_FtoS.Remove(ftosToRemove);
                 return m_StoF.Remove(key);
             }
             return false;

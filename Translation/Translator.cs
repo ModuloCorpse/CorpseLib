@@ -6,9 +6,9 @@ namespace CorpseLib.Translation
 {
     public class Translator
     {
-        private static readonly Dictionary<CultureInfo, Translation> ms_Translations = new();
-        private static readonly HashSet<CultureInfo> ms_AvailablesLanguages = new();
-        private static readonly Translation ms_DefaultTranslation = new();
+        private static readonly Dictionary<CultureInfo, Translation> ms_Translations = [];
+        private static readonly HashSet<CultureInfo> ms_AvailablesLanguages = [];
+        private static readonly Translation ms_DefaultTranslation = [];
         private static Translation? ms_CurrentTranslation = null;
         private static CultureInfo ms_CurrentLanguage = CultureInfo.CurrentUICulture;
 
@@ -61,8 +61,8 @@ namespace CorpseLib.Translation
 
         public static void AddTranslation(CultureInfo cultureInfo, TranslationKey key, string translation)
         {
-            if (ms_Translations.ContainsKey(cultureInfo))
-                ms_Translations[cultureInfo].Add(key, translation);
+            if (ms_Translations.TryGetValue(cultureInfo, out Translation? value))
+                value.Add(key, translation);
             else
             {
                 ms_Translations[cultureInfo] = new(cultureInfo) { { key, translation } };
@@ -74,8 +74,8 @@ namespace CorpseLib.Translation
         {
             foreach (CultureInfo cultureInfo in translation.CultureInfos)
             {
-                if (ms_Translations.ContainsKey(cultureInfo))
-                    ms_Translations[cultureInfo].Merge(translation);
+                if (ms_Translations.TryGetValue(cultureInfo, out Translation? value))
+                    value.Merge(translation);
                 else
                 {
                     ms_Translations[cultureInfo] = translation;

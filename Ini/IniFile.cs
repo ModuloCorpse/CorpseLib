@@ -5,7 +5,7 @@ namespace CorpseLib.Ini
 {
     public class IniFile : IEnumerable<IniSection>
     {
-        private readonly Dictionary<string, IniSection> m_Sections = new();
+        private readonly Dictionary<string, IniSection> m_Sections = [];
         private IniSection? m_EmptySection;
         public IniSection? this[string key]
         {
@@ -25,7 +25,7 @@ namespace CorpseLib.Ini
         {
             IniFile ret = new();
             string[] lines = content.Split(Environment.NewLine);
-            IniSection section = new();
+            IniSection section = [];
             bool hasRead = false;
             int i = 0;
             foreach (string line in lines)
@@ -71,20 +71,20 @@ namespace CorpseLib.Ini
         {
             if (string.IsNullOrEmpty(key))
             {
-                m_EmptySection ??= new();
+                m_EmptySection ??= [];
                 return m_EmptySection;
             }
             else if (!m_Sections.ContainsKey(key))
-                m_Sections[key] = new();
+                m_Sections[key] = [];
             return m_Sections[key];
         }
 
         public void NewSection(string name)
         {
             if (string.IsNullOrEmpty(name))
-                m_EmptySection ??= new();
+                m_EmptySection ??= [];
             else if (!m_Sections.ContainsKey(name))
-                m_Sections[name] = new();
+                m_Sections[name] = [];
         }
 
         public void AddSection(IniSection? section)
@@ -100,10 +100,10 @@ namespace CorpseLib.Ini
             }
             else
             {
-                if (!m_Sections.ContainsKey(section.Name))
-                    m_Sections[section.Name] = section;
+                if (m_Sections.TryGetValue(section.Name, out IniSection? value))
+                    value.Add(section);
                 else
-                    m_Sections[section.Name].Add(section);
+                    m_Sections[section.Name] = section;
             }
         }
 

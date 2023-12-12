@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 
 namespace CorpseLib.Network
 {
@@ -14,7 +13,7 @@ namespace CorpseLib.Network
 
         private readonly ProtocolFactory m_ProtocolFactory;
         private readonly ConcurrentDictionary<int, ATCPClient> m_Clients = new();
-        private readonly List<int> m_FreeIdx = new();
+        private readonly List<int> m_FreeIdx = [];
         protected readonly Socket m_ServerSocket;
         private IMonitor? m_Monitor = null;
         private int m_CurrentIdx = 0;

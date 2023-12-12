@@ -4,20 +4,17 @@ using System.Text;
 
 namespace CorpseLib.Logging
 {
-    public class Logger : IEnumerable<IExtension>
+    public class Logger(string format) : IEnumerable<IExtension>
     {
-        private class LambdaExtension : IExtension
+        private class LambdaExtension(Action<string> lambda) : IExtension
         {
-            private readonly Action<string> m_Lambda;
-            public LambdaExtension(Action<string> lambda) => m_Lambda = lambda;
+            private readonly Action<string> m_Lambda = lambda;
             public void Log(string message) => m_Lambda(message);
         }
 
-        private readonly List<IExtension> m_Extensions = new();
-        private readonly string m_Format;
+        private readonly List<IExtension> m_Extensions = [];
+        private readonly string m_Format = format;
         private volatile bool m_Started = false;
-
-        public Logger(string format) => m_Format = format;
 
         public void Start() => m_Started = true;
         public void Stop() => m_Started = false;

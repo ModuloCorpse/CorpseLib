@@ -39,7 +39,7 @@ namespace CorpseLib.StructuredText
             TEXT
         }
 
-        private readonly Dictionary<string, object?> m_Properties = new();
+        private readonly Dictionary<string, object?> m_Properties = [];
         private readonly string m_Content;
         private readonly Type m_Type;
 

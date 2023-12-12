@@ -9,7 +9,7 @@ namespace CorpseLib.Placeholder
             public string ToVariableString();
         }
 
-        private readonly Dictionary<string, object> m_Variables = new();
+        private readonly Dictionary<string, object> m_Variables = [];
 
         public Context() : base() {}
 

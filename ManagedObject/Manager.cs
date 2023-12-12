@@ -5,7 +5,7 @@ namespace CorpseLib.ManagedObject
     public abstract class Manager<T> where T : Object<T>
     {
         private readonly string m_DirPath;
-        private readonly Dictionary<string, T> m_Objects = new();
+        private readonly Dictionary<string, T> m_Objects = [];
         private T? m_CurrentObject = null;
 
         protected Manager(string directoryPath) => m_DirPath = directoryPath;
@@ -28,9 +28,8 @@ namespace CorpseLib.ManagedObject
 
         public void RemoveObject(string id)
         {
-            if (m_Objects.ContainsKey(id))
+            if (m_Objects.Remove(id))
             {
-                m_Objects.Remove(id);
                 File.Delete(string.Format("{0}/{1}.json", m_DirPath, id));
                 if (m_CurrentObject != null && m_CurrentObject.ID == id)
                     m_CurrentObject = null;
@@ -67,7 +66,7 @@ namespace CorpseLib.ManagedObject
                 Directory.CreateDirectory(m_DirPath);
             else
             {
-                List<Tuple<string, string>> parentsLinks = new();
+                List<Tuple<string, string>> parentsLinks = [];
                 string[] files = Directory.GetFiles(m_DirPath);
                 string? currentID = null;
                 foreach (string file in files)
@@ -83,9 +82,8 @@ namespace CorpseLib.ManagedObject
                         }
                         else
                         {
-                            if (m_Objects.ContainsKey(objID))
+                            if (m_Objects.TryGetValue(objID, out T? oldObj))
                             {
-                                T oldObj = m_Objects[objID];
                                 oldObj.Fill(json);
                                 string parent = json.GetOrDefault("parent", string.Empty)!;
                                 if (!string.IsNullOrWhiteSpace(parent))
@@ -122,7 +120,7 @@ namespace CorpseLib.ManagedObject
             if (!Directory.Exists(m_DirPath))
                 Directory.CreateDirectory(m_DirPath);
 
-            JFile json = new();
+            JFile json = [];
             json.Add("current", m_CurrentObject?.ID ?? string.Empty);
             SaveSettings(ref json);
             json.WriteToFile(string.Format("{0}/settings.json", m_DirPath));

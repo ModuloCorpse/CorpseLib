@@ -2,7 +2,7 @@
 {
     public class Canal
     {
-        private readonly List<Action> m_TriggerListeners = new();
+        private readonly List<Action> m_TriggerListeners = [];
         private readonly object m_Lock = new();
 
         public void Register(Action listener) { lock (m_Lock) { m_TriggerListeners.Add(listener); } }
@@ -13,7 +13,7 @@
 
     public class Canal<TEventType>
     {
-        private readonly List<Action<TEventType?>> m_MessageListeners = new();
+        private readonly List<Action<TEventType?>> m_MessageListeners = [];
         private readonly object m_Lock = new();
 
         public void Register(Action<TEventType?> listener) { lock (m_Lock) { m_MessageListeners.Add(listener); } }

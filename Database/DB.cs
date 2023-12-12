@@ -4,19 +4,13 @@ namespace CorpseLib.Database
 {
     public class DB
     {
-        public class Entry
+        public class Entry(Guid guid, byte[] content)
         {
-            private readonly Guid m_Guid;
-            private byte[] m_Content;
+            private readonly Guid m_Guid = guid;
+            private byte[] m_Content = content;
 
             public Guid Guid => m_Guid;
             public byte[] Content => m_Content;
-
-            public Entry(Guid guid, byte[] content)
-            {
-                m_Guid = guid;
-                m_Content = content;
-            }
 
             internal bool SetContent(byte[] content)
             {
@@ -27,7 +21,7 @@ namespace CorpseLib.Database
             }
         }
 
-        private readonly Dictionary<Guid, Entry> m_Entries = new();
+        private readonly Dictionary<Guid, Entry> m_Entries = [];
         private readonly BytesSerializer m_BytesSerializer = new();
         private readonly EntrySerializer m_EntrySerializer = new();
 

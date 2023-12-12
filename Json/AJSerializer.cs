@@ -8,7 +8,7 @@ namespace CorpseLib.Json
 
     public class JSerializer : Serializer<AJSerializer>
     {
-        private static readonly List<AJSerializer> ms_DefaultSerializers = new();
+        private static readonly List<AJSerializer> ms_DefaultSerializers = [];
         private static bool ms_IsInit = false;
 
         public JSerializer()

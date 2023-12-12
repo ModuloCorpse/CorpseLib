@@ -181,7 +181,7 @@ namespace CorpseLib.Network
                 m_Monitor?.OnReceive(readBuffer[..bytesRead]);
                 m_BytesReader.Append(readBuffer, bytesRead);
             }
-            List<object> packets = new();
+            List<object> packets = [];
             bool readSuccess;
             do
             {

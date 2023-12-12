@@ -11,7 +11,7 @@ namespace CorpseLib.Json
             DoIndent = false,
         };
 
-        private static readonly Dictionary<Type, AJSerializer> ms_RegisteredSerializers = new();
+        private static readonly Dictionary<Type, AJSerializer> ms_RegisteredSerializers = [];
 
         public static void RegisterSerializer<T>(AJSerializer<T> serializer) => ms_RegisteredSerializers[typeof(T)] = serializer;
         public static void UnregisterSerializer<T>() => ms_RegisteredSerializers.Remove(typeof(T));
@@ -102,14 +102,14 @@ namespace CorpseLib.Json
                 return new JValue(item);
             if (item is IDictionary dict && itemType.GetGenericArguments()[0] == typeof(string))
             {
-                JObject obj = new();
+                JObject obj = [];
                 foreach (DictionaryEntry pair in dict)
                     obj[(string)pair.Key] = pair.Value;
                 return obj;
             }
             else if ((itemType.IsArray || item is IList) && item is IEnumerable enumerable)
             {
-                JArray arr = new();
+                JArray arr = [];
                 foreach (object elem in enumerable)
                     arr.Add(Cast(elem));
                 return arr;
@@ -118,7 +118,7 @@ namespace CorpseLib.Json
             AJSerializer? serializer = jSerializer.GetSerializerFor(itemType);
             if (serializer != null)
             {
-                JObject ret = new();
+                JObject ret = [];
                 serializer.SerializeObj(item, ret);
                 return ret;
             }
@@ -131,14 +131,14 @@ namespace CorpseLib.Json
                 return val.Value;
             else if (node is JObject obj)
             {
-                Dictionary<string, object?> ret = new();
+                Dictionary<string, object?> ret = [];
                 foreach (KeyValuePair<string, JNode> pair in obj)
                     ret[pair.Key] = Flatten(pair.Value);
                 return ret;
             }
             else if (node is JArray arr)
             {
-                List<object?> ret = new();
+                List<object?> ret = [];
                 foreach (JNode elem in arr)
                     ret.Add(Flatten(elem));
                 return ret;

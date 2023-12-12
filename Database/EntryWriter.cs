@@ -2,20 +2,13 @@
 
 namespace CorpseLib.Database
 {
-    public class EntryWriter
+    public class EntryWriter(BytesSerializer serializer, EntrySerializer entrySerializer, DB dB)
     {
-        private readonly DB m_DB;
-        private readonly BytesWriter m_BytesWriter;
-        private readonly EntrySerializer m_EntrySerializer;
+        private readonly DB m_DB = dB;
+        private readonly BytesWriter m_BytesWriter = new(serializer);
+        private readonly EntrySerializer m_EntrySerializer = entrySerializer;
 
         internal byte[] Bytes => m_BytesWriter.Bytes;
-
-        public EntryWriter(BytesSerializer serializer, EntrySerializer entrySerializer, DB dB)
-        {
-            m_DB = dB;
-            m_BytesWriter = new(serializer);
-            m_EntrySerializer = entrySerializer;
-        }
 
         public void Write(byte value) => m_BytesWriter.Write(value);
         public void Write(sbyte value) => m_BytesWriter.Write(value);

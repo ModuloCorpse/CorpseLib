@@ -2,15 +2,13 @@
 
 namespace CorpseLib.Serialize
 {
-    public class BytesWriter
+    public class BytesWriter(BytesSerializer serializer)
     {
-        private readonly BytesSerializer m_Serializer;
-        private byte[] m_Bytes = Array.Empty<byte>();
+        private readonly BytesSerializer m_Serializer = serializer;
+        private byte[] m_Bytes = [];
 
         public BytesSerializer Serializer => m_Serializer;
         public byte[] Bytes => m_Bytes;
-
-        public BytesWriter(BytesSerializer serializer) => m_Serializer = serializer;
 
         //byte
         public void Write(byte value)

@@ -5,7 +5,7 @@
         private class SerializerTreeNode
         {
             private readonly TSerializer? m_Serializer;
-            private readonly Dictionary<Type, SerializerTreeNode> m_Children = new();
+            private readonly Dictionary<Type, SerializerTreeNode> m_Children = [];
 
             public SerializerTreeNode(TSerializer serializer) => m_Serializer = serializer;
             public SerializerTreeNode() => m_Serializer = default;
@@ -18,7 +18,7 @@
 
             public bool Insert(SerializerTreeNode node)
             {
-                List<Type> typeToRemove = new();
+                List<Type> typeToRemove = [];
                 Type serializerType = node.GetSerializerType();
                 foreach (var child in m_Children)
                 {
@@ -103,11 +103,11 @@
 
             public TSerializer? Search(Type type)
             {
-                List<Tuple<uint, TSerializer>> classList = new();
+                List<Tuple<uint, TSerializer>> classList = [];
                 m_Classes.Search(type, 0, ref classList);
                 if (classList.Count != 0)
                     return classList[0].Item2;
-                List<Tuple<uint, TSerializer>> interfaceList = new();
+                List<Tuple<uint, TSerializer>> interfaceList = [];
                 m_Interfaces.Search(type, 0, ref interfaceList);
                 uint depth = 0;
                 TSerializer? found = null;

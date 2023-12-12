@@ -1,8 +1,9 @@
 ﻿using System.Net.Sockets;
+using static CorpseLib.Network.ATCPServer;
 
 namespace CorpseLib.Network
 {
-    public class TCPAsyncServer : ATCPServer
+    public class TCPAsyncServer(ProtocolFactory protocolFactory, int port) : ATCPServer(protocolFactory, port)
     {
         private void AcceptCallback(IAsyncResult ar)
         {
@@ -19,8 +20,6 @@ namespace CorpseLib.Network
                 Stop();
             }
         }
-
-        public TCPAsyncServer(ProtocolFactory protocolFactory, int port) : base(protocolFactory, port) { }
 
         public void Start()
         {

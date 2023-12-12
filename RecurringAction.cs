@@ -1,21 +1,16 @@
 ﻿namespace CorpseLib
 {
-    public class RecurringAction
+    public class RecurringAction(int refreshIntervalInMilliseconds)
     {
         public event EventHandler? OnStart;
         public event EventHandler? OnUpdate;
         public event EventHandler? OnStop;
 
-        private readonly int m_RefreshInterval;
+        private readonly int m_RefreshInterval = refreshIntervalInMilliseconds;
         private volatile bool m_Running;
 
         public int RefreshInterval => m_RefreshInterval;
         public bool Running => m_Running;
-
-        public RecurringAction(int refreshIntervalInMilliseconds)
-        {
-            m_RefreshInterval = refreshIntervalInMilliseconds;
-        }
 
         public void Start()
         {

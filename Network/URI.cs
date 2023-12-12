@@ -76,31 +76,20 @@ namespace CorpseLib.Network
         /// <summary>
         /// Class representing an URL exception
         /// </summary>
-        public class URLException: Exception
-        {
-            /// <summary>
-            /// Constructor
-            /// </summary>
-            /// <param name="message">Exception message</param>
-            public URLException(string message) : base(message) {}
-        }
+        /// <remarks>
+        /// Constructor
+        /// </remarks>
+        /// <param name="message">Exception message</param>
+        public class URLException(string message) : Exception(message) { }
 
-        internal class Authority
+        internal class Authority(string userInfo, string host, int port)
         {
-            private readonly string m_UserInfo;
-            private readonly string m_Host;
-            private readonly int m_Port;
-
+            private readonly string m_UserInfo = userInfo;
+            private readonly string m_Host = host;
+            private readonly int m_Port = port;
             public string UserInfo => m_UserInfo;
             public string Host => m_Host;
             public int Port => m_Port;
-
-            public Authority(string userInfo, string host, int port)
-            {
-                m_UserInfo = userInfo;
-                m_Host = host;
-                m_Port = port;
-            }
 
             public string ToDebugString()
             {

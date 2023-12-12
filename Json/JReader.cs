@@ -51,7 +51,14 @@ namespace CorpseLib.Json
                     c = m_Content[++m_Idx];
                     switch (c)
                     {
+                        case '\'': stringBuilder.Append('\''); break;
                         case '"': stringBuilder.Append('\"'); break;
+                        case '\\': stringBuilder.Append('\\'); break;
+                        case 'n': stringBuilder.Append('\n'); break;
+                        case 'r': stringBuilder.Append('\r'); break;
+                        case 't': stringBuilder.Append('\t'); break;
+                        case 'b': stringBuilder.Append('\b'); break;
+                        case 'f': stringBuilder.Append('\f'); break;
                         default: stringBuilder.Append('\\'); stringBuilder.Append(c); break;
                     }
                 }

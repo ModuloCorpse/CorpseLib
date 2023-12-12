@@ -1,5 +1,4 @@
-﻿using CorpseLib.Shell;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace CorpseLib.Placeholder
 {
@@ -24,7 +23,7 @@ namespace CorpseLib.Placeholder
 
         public override string? GetVariable(string name)
         {
-            OperationResult<List<string>> nameSplit = Helper.SplitCommand(name, '.');
+            OperationResult<List<string>> nameSplit = Shell.Helper.SplitCommand(name, '.');
             if (!nameSplit)
                 return null;
             List<string> variableFields = nameSplit.Result!;

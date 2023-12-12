@@ -7,7 +7,6 @@ namespace CorpseLib.Network
     {
         private readonly Dictionary<string, string> m_Data = new();
         private readonly char m_Delimiter;
-        private bool m_IsEncoded = false;
 
         public URIQuery(char delimiter) => m_Delimiter = delimiter;
         public URIQuery(string query, char[] queryDelimiters)
@@ -39,13 +38,7 @@ namespace CorpseLib.Network
             set => Add(key, value);
         }
 
-        public void Add(string key, string value)
-        {
-            if (m_IsEncoded)
-                m_Data[URI.Encode(key)] = URI.Encode(value);
-            else
-                m_Data[URI.Decode(key)] = URI.Decode(value);
-        }
+        public void Add(string key, string value) => m_Data[key] = value;
 
         public bool HaveData(string key) => m_Data.ContainsKey(key);
 
@@ -53,22 +46,6 @@ namespace CorpseLib.Network
         {
             foreach (KeyValuePair<string, string> attr in attributes)
                 m_Data[attr.Key] = attr.Value;
-        }
-
-        public void Encode()
-        {
-            Dictionary<string, string> encodedData = m_Data.ToDictionary(entry => URI.Encode(entry.Key), entry => URI.Encode(entry.Value));
-            m_Data.Clear();
-            AddData(encodedData);
-            m_IsEncoded = true;
-        }
-
-        public void Decode()
-        {
-            Dictionary<string, string> decodedData = m_Data.ToDictionary(entry => URI.Decode(entry.Key), entry => URI.Decode(entry.Value));
-            m_Data.Clear();
-            AddData(decodedData);
-            m_IsEncoded = false;
         }
 
         public string ToDebugString()

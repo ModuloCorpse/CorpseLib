@@ -26,9 +26,13 @@ namespace CorpseLib.Translation
 
         public static bool SetLanguage(CultureInfo culture)
         {
-            ms_CurrentLanguage = culture;
-            CurrentLanguageChanged?.Invoke();
-            return ms_Translations.TryGetValue(culture, out ms_CurrentTranslation);
+            if (ms_Translations.TryGetValue(culture, out ms_CurrentTranslation))
+            {
+                ms_CurrentLanguage = culture;
+                CurrentLanguageChanged?.Invoke();
+                return true;
+            }
+            return false;
         }
 
         public static void Load(params string[] translationFiles)

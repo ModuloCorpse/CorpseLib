@@ -72,6 +72,8 @@ namespace CorpseLib.Serialize
             return true;
         }
 
+        public bool StartWith(byte[] key) => Compare(key, m_Idx);
+
         public int IndexOf(byte[] key)
         {
             int idx = m_Idx;

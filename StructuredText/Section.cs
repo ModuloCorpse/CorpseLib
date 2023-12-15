@@ -35,8 +35,9 @@ namespace CorpseLib.StructuredText
 
         public enum Type
         {
+            TEXT,
             IMAGE,
-            TEXT
+            ANIMATED_IMAGE
         }
 
         private readonly Dictionary<string, object?> m_Properties = [];

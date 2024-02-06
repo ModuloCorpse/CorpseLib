@@ -34,7 +34,7 @@ namespace CorpseLib
         {
             OnActionStart();
             m_StopWatch.Start();
-            Task.Factory.StartNew(() => { NextLoop(); });
+            Task.Run(NextLoop);
             m_Running = true;
         }
 
@@ -56,7 +56,7 @@ namespace CorpseLib
                 OnActionFinish();
             }
             else
-                Task.Factory.StartNew(() => { NextLoop(); });
+                Task.Run(NextLoop);
         }
 
         public void Stop()

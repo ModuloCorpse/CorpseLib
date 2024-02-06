@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using CorpseLib.Serialize;
+using System.Net.Sockets;
 
 namespace CorpseLib.Network
 {
@@ -27,6 +28,7 @@ namespace CorpseLib.Network
             }
         }
 
+        public override void TestRead(BytesWriter bytesWriter) => TestReceived(bytesWriter);
         public override List<object> Read()
         {
             m_Stream.ReadTimeout = m_ReadTimeout;
@@ -44,6 +46,8 @@ namespace CorpseLib.Network
             InternalDisconnect();
             return [];
         }
+
+        protected override void HandleReceivedPacket(object packet) => m_Protocol.TreatPacket(packet);
 
         protected override void HandleActionAfterReconnect(Action action)
         {

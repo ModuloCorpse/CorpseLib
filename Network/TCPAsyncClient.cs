@@ -1,4 +1,6 @@
-﻿using System.Net.Sockets;
+﻿using CorpseLib.Json;
+using CorpseLib.Serialize;
+using System.Net.Sockets;
 
 namespace CorpseLib.Network
 {
@@ -12,7 +14,7 @@ namespace CorpseLib.Network
         internal void StartReceiving()
         {
             m_IsReceiving = true;
-            Task.Factory.StartNew(async () =>
+            Task.Run(async () =>
             {
                 byte[] readBuffer = new byte[1024];
                 try
@@ -34,7 +36,9 @@ namespace CorpseLib.Network
             });
         }
 
-        protected override void HandleReconnect() => Task.Factory.StartNew(async () =>
+        protected override void HandleReceivedPacket(object packet) => Task.Run(() => { m_Protocol.TreatPacket(packet); });
+
+        protected override void HandleReconnect() => Task.Run(async () =>
         {
             uint tryCount = 0;
             var periodicTimer = new PeriodicTimer(Delay);
@@ -56,11 +60,13 @@ namespace CorpseLib.Network
             }
         });
 
-        public override List<object> Read() => new();
+        public override void TestRead(BytesWriter bytesWriter) => Task.Run(() => TestReceived(bytesWriter));
+
+        public override List<object> Read() => [];
 
         protected override void HandleActionAfterReconnect(Action action)
         {
-            Task.Factory.StartNew(async () =>
+            Task.Run(async () =>
             {
                 var periodicTimer = new PeriodicTimer(Delay);
                 while (await periodicTimer.WaitForNextTickAsync())

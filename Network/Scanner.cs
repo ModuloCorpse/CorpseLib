@@ -130,7 +130,7 @@ namespace CorpseLib.Network
         {
             Guid counterGuid = ThreadCounter.NewCounter();
             ThreadCounter.IncreaseCounter(counterGuid);
-            Task.Factory.StartNew(() =>
+            Task.Run(() =>
             {
                 foreach (byte k in m_ThirdRange)
                 {
@@ -147,7 +147,7 @@ namespace CorpseLib.Network
         {
             Guid counterGuid = ThreadCounter.NewCounter();
             ThreadCounter.IncreaseCounter(counterGuid);
-            Task.Factory.StartNew(() =>
+            Task.Run(() =>
             {
                 foreach (byte j in m_SecondRange)
                 {
@@ -164,7 +164,7 @@ namespace CorpseLib.Network
         {
             Guid counterGuid = ThreadCounter.NewCounter();
             ThreadCounter.IncreaseCounter(counterGuid);
-            Task.Factory.StartNew(() =>
+            Task.Run(() =>
             {
                 foreach (byte i in m_FirstRange)
                 {

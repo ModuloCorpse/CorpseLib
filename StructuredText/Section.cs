@@ -16,7 +16,10 @@ namespace CorpseLib.StructuredText
                     {
                         if (reader.TryGet("type", out Type? type))
                         {
-                            return new(new(content!, (Type)type!, properties));
+                            if (reader.TryGet("alt", out string? alt))
+                                return new(new(content!, alt!, (Type)type!, properties));
+                            else
+                                return new(new(content!, (Type)type!, properties));
                         }
                         return new("Bad json", "No section type");
                     }
@@ -27,8 +30,13 @@ namespace CorpseLib.StructuredText
 
             protected override void Serialize(Section obj, JObject writer)
             {
-                writer["properties"] = obj.m_Properties;
+                if (obj.m_Properties.Count == 0)
+                    writer["properties"] = new JObject();
+                else
+                    writer["properties"] = obj.m_Properties;
                 writer["content"] = obj.m_Content;
+                if (!string.IsNullOrEmpty(obj.m_Alt))
+                    writer["alt"] = obj.m_Alt;
                 writer["type"] = obj.m_Type;
             }
         }
@@ -42,19 +50,24 @@ namespace CorpseLib.StructuredText
 
         private readonly Dictionary<string, object?> m_Properties = [];
         private readonly string m_Content;
+        private readonly string m_Alt;
         private readonly Type m_Type;
 
         public Dictionary<string, object?> Properties => m_Properties;
         public string Content => m_Content;
+        public string Alt => m_Alt;
         public Type SectionType => m_Type;
         public object? this[string key] => m_Properties[key];
 
-        internal Section(string content, Type type)
+        internal Section(string content, string alt, Type type)
         {
             m_Content = content;
+            m_Alt = alt;
             m_Type = type;
         }
 
+        internal Section(string content, Type type) : this(content, string.Empty, type) { }
+        internal Section(string content, string alt, Type type, Dictionary<string, object?> properties) : this(content, alt, type) => m_Properties = properties;
         internal Section(string content, Type type, Dictionary<string, object?> properties) : this(content, type) => m_Properties = properties;
     }
 }

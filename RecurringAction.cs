@@ -15,7 +15,7 @@
         public void Start()
         {
             OnActionStart();
-            Task.Factory.StartNew(() => { NextLoop(); });
+            Task.Run(NextLoop);
             m_Running = true;
         }
 
@@ -25,7 +25,7 @@
             if (m_Running)
             {
                 OnActionUpdate();
-                Task.Factory.StartNew(() => { NextLoop(); });
+                Task.Run(NextLoop);
             }
         }
 

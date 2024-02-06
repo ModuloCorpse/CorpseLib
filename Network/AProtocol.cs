@@ -19,7 +19,7 @@ namespace CorpseLib.Network
         protected abstract void Treat(object packet);
         protected abstract void SetupSerializer(ref BytesSerializer serializer);
         protected virtual void OnDiscardException(Exception exception) { }
-        protected void SetNewURL(URI newUrl) => m_Client?.SetNewURL(newUrl);
+        protected void SetReadOnly(bool isReadOnly) => m_Client!.SetReadOnly(isReadOnly);
 
         //====================INTERNAL====================\\
         internal void SetClient(ATCPClient client) => m_Client = client;
@@ -31,6 +31,13 @@ namespace CorpseLib.Network
         internal void ClientDisconnected() => OnClientDisconnected();
         internal void FillSerializer(ref BytesSerializer serializer) => SetupSerializer(ref serializer);
         internal void DiscardException(Exception exception) => OnDiscardException(exception);
+
+        internal void InternalSend(object msg)
+        {
+            BytesWriter writer = CreateBytesWriter();
+            Write(writer, msg);
+            m_Client!.WriteToStream(writer.Bytes);
+        }
 
         //====================PUBLIC====================\\
         public bool IsSynchronous() => !m_Client!.IsAsynchronous();
@@ -44,11 +51,9 @@ namespace CorpseLib.Network
         public void Connect() => m_Client!.Connect();
         public void Reconnect() => m_Client!.Reconnect();
         public void SetMonitor(IMonitor monitor) => m_Client!.SetMonitor(monitor);
-        public void Send(object msg)
-        {
-            BytesWriter writer = new(m_Client!.BytesSerializer);
-            Write(writer, msg);
-            m_Client.WriteToStream(writer.Bytes);
-        }
+        public void Send(object msg) => m_Client!.Send(msg);
+        public void ForceSend(object msg) => m_Client!.ForceSend(msg);
+        public BytesWriter CreateBytesWriter() => m_Client!.CreateBytesWriter();
+        public void TestRead(BytesWriter bytesWriter) => m_Client!.TestRead(bytesWriter);
     }
 }

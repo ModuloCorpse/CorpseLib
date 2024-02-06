@@ -20,7 +20,7 @@ namespace CorpseLib.Json
         protected override void Serialize(JNode obj, BytesWriter writer)
         {
             string str = obj.ToNetworkString();
-            writer.Write(Encoding.UTF8.GetBytes(str).Length);
+            writer.Write(Encoding.UTF8.GetByteCount(str));
             writer.Write(str);
         }
     }

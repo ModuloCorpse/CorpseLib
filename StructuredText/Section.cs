@@ -1,4 +1,5 @@
 ﻿using CorpseLib.Json;
+using System.Diagnostics.CodeAnalysis;
 
 namespace CorpseLib.StructuredText
 {
@@ -11,7 +12,7 @@ namespace CorpseLib.StructuredText
                 JNode? propertiesNode = reader.Get("properties");
                 if (propertiesNode != null && propertiesNode is JObject propertiesObj)
                 {
-                    Dictionary<string, object?> properties = (Dictionary<string, object?>)JHelper.Flatten(propertiesObj)!;
+                    Dictionary<string, object> properties = (Dictionary<string, object>)JHelper.Flatten(propertiesObj)!;
                     if (reader.TryGet("content", out string? content))
                     {
                         if (reader.TryGet("type", out Type? type))
@@ -48,16 +49,15 @@ namespace CorpseLib.StructuredText
             ANIMATED_IMAGE
         }
 
-        private readonly Dictionary<string, object?> m_Properties = [];
+        private readonly Dictionary<string, object> m_Properties = [];
         private readonly string m_Content;
         private readonly string m_Alt;
         private readonly Type m_Type;
 
-        public Dictionary<string, object?> Properties => m_Properties;
+        public Dictionary<string, object> Properties => m_Properties;
         public string Content => m_Content;
         public string Alt => m_Alt;
         public Type SectionType => m_Type;
-        public object? this[string key] => m_Properties[key];
 
         internal Section(string content, string alt, Type type)
         {
@@ -67,7 +67,38 @@ namespace CorpseLib.StructuredText
         }
 
         internal Section(string content, Type type) : this(content, string.Empty, type) { }
-        internal Section(string content, string alt, Type type, Dictionary<string, object?> properties) : this(content, alt, type) => m_Properties = properties;
-        internal Section(string content, Type type, Dictionary<string, object?> properties) : this(content, type) => m_Properties = properties;
+        internal Section(string content, string alt, Type type, Dictionary<string, object> properties) : this(content, alt, type) => m_Properties = properties;
+        internal Section(string content, Type type, Dictionary<string, object> properties) : this(content, type) => m_Properties = properties;
+
+        public bool TryGetProperties<T>(string key, [NotNullWhen(true)] out T? ret)
+        {
+            if (m_Properties.TryGetValue(key, out object? obj))
+            {
+                if (obj is T t)
+                {
+                    ret = t;
+                    return true;
+                }
+                else
+                {
+
+                    T? tmp = Helper.Cast<T>(obj);
+                    if (tmp != null)
+                    {
+                        ret = tmp;
+                        return true;
+                    }
+                }
+            }
+            ret = default;
+            return false;
+        }
+
+        public T? GetPropertiesOr<T>(string key, T? defaultValue)
+        {
+            if (TryGetProperties(key, out T? obj))
+                return obj;
+            return defaultValue;
+        }
     }
 }

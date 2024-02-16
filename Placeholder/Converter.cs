@@ -30,8 +30,9 @@ namespace CorpseLib.Placeholder
             internal string Result => m_Result;
         }
 
-        private static string TreatVariable(string content, IContext[] contexts, ref Dictionary<string, List<FunctionResult>> fctResults)
+        private static string TreatVariable(string content, IContext[] contexts, ref Dictionary<string, List<FunctionResult>> fctResults, out bool treated)
         {
+            treated = true;
             if (string.IsNullOrEmpty(content))
                 return string.Empty;
             if (content[0] == '@')
@@ -46,6 +47,16 @@ namespace CorpseLib.Placeholder
                     return content[1..^1];
                 return content;
             }
+            else if (content.Contains(" || "))
+            {
+                int pos = content.IndexOf(" || ");
+                string variable = content[..pos];
+                string variableReplacement = content[(pos + 4)..];
+                string treatedVariableResult = TreatVariable(variable.Trim(), contexts, ref fctResults, out bool isTreated);
+                if (isTreated)
+                    return treatedVariableResult;
+                return TreatVariable(variableReplacement.Trim(), contexts, ref fctResults, out treated);
+            }
             else if (content.Contains('('))
             {
                 int pos = content.IndexOf('(');
@@ -53,7 +64,15 @@ namespace CorpseLib.Placeholder
                 string functionVariables = content[(pos + 1)..content.LastIndexOf(')')];
                 List<string> argumentsList = [];
                 foreach (string functionVariable in functionVariables.Split(','))
-                    argumentsList.Add(TreatVariable(functionVariable.Trim(), contexts, ref fctResults));
+                {
+                    string treatedVariableResult = TreatVariable(functionVariable.Trim(), contexts, ref fctResults, out bool isTreated);
+                    if (!isTreated)
+                    {
+                        treated = false;
+                        return content;
+                    }
+                    argumentsList.Add(treatedVariableResult);
+                }
                 string[] arguments = [.. argumentsList];
                 if (fctResults.TryGetValue(functionName, out var fctResult))
                 {
@@ -74,6 +93,7 @@ namespace CorpseLib.Placeholder
                         return ret;
                     }
                 }
+                treated = false;
                 return content;
             }
             foreach (IContext context in contexts)
@@ -82,6 +102,7 @@ namespace CorpseLib.Placeholder
                 if (variable != null)
                     return variable;
             }
+            treated = false;
             return content;
         }
 
@@ -107,7 +128,7 @@ namespace CorpseLib.Placeholder
                             builder.Append(result);
                         else
                         {
-                            string treatedVariable = TreatVariable(variable, context, ref results);
+                            string treatedVariable = TreatVariable(variable, context, ref results, out bool _);
                             treatedVariables[variable] = treatedVariable;
                             builder.Append(treatedVariable);
                         }

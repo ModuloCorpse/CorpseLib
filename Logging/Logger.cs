@@ -26,15 +26,16 @@ namespace CorpseLib.Logging
         {
             if (m_Started)
             {
+                Context logContext = new();
                 DateTime now = DateTime.Now;
-                context.AddVariable("d", now.Day);
-                context.AddVariable("M", now.Month);
-                context.AddVariable("y", now.Year);
-                context.AddVariable("h", now.Hour);
-                context.AddVariable("m", now.Minute);
-                context.AddVariable("s", now.Second);
-                context.AddVariable("ms", now.Millisecond);
-                context.AddVariable("log", logContent);
+                logContext.AddVariable("d", now.Day);
+                logContext.AddVariable("M", now.Month);
+                logContext.AddVariable("y", now.Year);
+                logContext.AddVariable("h", now.Hour);
+                logContext.AddVariable("m", now.Minute);
+                logContext.AddVariable("s", now.Second);
+                logContext.AddVariable("ms", now.Millisecond);
+                logContext.AddVariable("log", logContent);
 
                 StringBuilder builder = new();
                 foreach (string traceLine in Environment.StackTrace.Split('\n'))
@@ -42,9 +43,9 @@ namespace CorpseLib.Logging
                     if (!traceLine.Contains("CorpseLib.Logging.Logger") && !traceLine.Contains("at System.Environment.get_StackTrace()"))
                         builder.AppendLine(traceLine);
                 }
-                context.AddVariable("St", builder);
+                logContext.AddVariable("St", builder);
 
-                string log = Converter.Convert(m_Format, context);
+                string log = Converter.Convert(m_Format, [logContext, context]);
                 foreach (IExtension extension in m_Extensions)
                     extension.Log(log);
             }

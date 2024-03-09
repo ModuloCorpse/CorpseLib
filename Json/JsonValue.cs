@@ -2,12 +2,12 @@
 
 namespace CorpseLib.Json
 {
-    public class JValue : JNode, Context.IVariable
+    public class JsonValue : JsonNode, Context.IVariable
     {
         private readonly object m_Value;
 
-        public JValue(object value) => m_Value = value;
-        public JValue(JValue value) => m_Value = value.m_Value;
+        public JsonValue(object value) => m_Value = value;
+        public JsonValue(JsonValue value) => m_Value = value.m_Value;
 
         public Type Type => m_Value.GetType();
         public object Value => m_Value;
@@ -15,11 +15,11 @@ namespace CorpseLib.Json
         public object? Cast(Type type) => Helper.Cast(m_Value, type);
         public T? ValueCast<T>() => Helper.Cast<T>(m_Value);
 
-        public override void ToJson(ref JBuilder builder)
+        protected override void AppendToWriter(ref JsonWriter writer)
         {
             if (m_Value is string str)
             {
-                builder.AppendValue(string.Format("\"{0}\"", str
+                writer.Append(string.Format("\"{0}\"", str
                     .Replace("\\", "\\\\")
                     .Replace("\"", "\\\"")
                     .Replace("\n", "\\n")
@@ -29,18 +29,18 @@ namespace CorpseLib.Json
                     .Replace("\f", "\\f")));
             }
             else if (m_Value is bool b)
-                builder.AppendValue(b ? "true" : "false");
+                writer.Append(b ? "true" : "false");
             else if (m_Value is char c)
             {
                 if (c == '"')
-                    builder.AppendValue("\"\\\"\"");
+                    writer.Append("\"\\\"\"");
                 else
-                    builder.AppendValue(string.Format("\"{0}\"", c));
+                    writer.Append(string.Format("\"{0}\"", c));
             }
             else if (Type.IsEnum)
-                builder.AppendValue(((int)Convert.ChangeType(m_Value!, typeof(int))).ToString()!);
+                writer.Append(((int)Convert.ChangeType(m_Value!, typeof(int))).ToString()!);
             else
-                builder.AppendValue(m_Value!.ToString()!.Replace(',', '.'));
+                writer.Append(m_Value!.ToString()!.Replace(',', '.'));
         }
 
         public string ToVariableString() => m_Value.ToString() ?? string.Empty;

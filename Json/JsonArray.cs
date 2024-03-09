@@ -1,34 +1,34 @@
 ﻿namespace CorpseLib.Json
 {
-    public class JArray : JNode, IEnumerable<JNode>
+    public class JsonArray : JsonNode, IEnumerable<JsonNode>
     {
         private Type? m_ArrayType = null;
-        private readonly List<JNode> m_Children = [];
+        private readonly List<JsonNode> m_Children = [];
 
-        public JArray() { }
+        public JsonArray() { }
 
-        public JArray(JArray array)
+        public JsonArray(JsonArray array)
         {
             m_ArrayType = array.m_ArrayType;
             m_Children = array.m_Children;
         }
 
-        public JArray(List<JNode> children) => Add(children);
+        public JsonArray(List<JsonNode> children) => Add(children);
 
-        private static Type? GetNodeType(JNode child)
+        private static Type? GetNodeType(JsonNode child)
         {
-            if (child is JObject)
-                return typeof(JObject);
-            else if (child is JArray)
-                return typeof(JArray);
-            else if (child is JValue value)
+            if (child is JsonObject)
+                return typeof(JsonObject);
+            else if (child is JsonArray)
+                return typeof(JsonArray);
+            else if (child is JsonValue value)
                 return value.Type;
             return null;
         }
 
-        public bool Add(List<JNode> children)
+        public bool Add(List<JsonNode> children)
         {
-            foreach (JNode child in children)
+            foreach (JsonNode child in children)
             {
                 if (!Add(child))
                 {
@@ -39,7 +39,7 @@
             return true;
         }
 
-        public bool Add(JNode child)
+        public bool Add(JsonNode child)
         {
             if (m_ArrayType == null)
             {
@@ -58,20 +58,20 @@
             return false;
         }
 
-        public override void ToJson(ref JBuilder builder)
+        protected override void AppendToWriter(ref JsonWriter writer)
         {
-            builder.OpenArray();
+            writer.OpenArray();
             int i = 0;
             foreach (var child in m_Children)
             {
                 if (i++ > 0)
-                    builder.AppendSeparator();
-                child.ToJson(ref builder);
+                    writer.AppendSeparator();
+                AppendObject(ref writer, child);
             }
-            builder.CloseArray();
+            writer.CloseArray();
         }
 
-        public IEnumerator<JNode> GetEnumerator() => ((IEnumerable<JNode>)m_Children).GetEnumerator();
+        public IEnumerator<JsonNode> GetEnumerator() => ((IEnumerable<JsonNode>)m_Children).GetEnumerator();
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => ((System.Collections.IEnumerable)m_Children).GetEnumerator();
 

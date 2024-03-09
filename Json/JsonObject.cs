@@ -2,23 +2,12 @@
 
 namespace CorpseLib.Json
 {
-    public class JObject : JNode, IEnumerable<KeyValuePair<string, JNode>>
+    public class JsonObject : JsonNode, IEnumerable<KeyValuePair<string, JsonNode>>
     {
-        public static JObject Parse(string content)
-        {
-            JObject obj = [];
-            if (!string.IsNullOrEmpty(content))
-            {
-                JReader reader = new(content);
-                reader.Read(obj);
-            }
-            return obj;
-        }
+        private readonly Dictionary<string, JsonNode> m_Children = [];
 
-        private readonly Dictionary<string, JNode> m_Children = [];
-
-        public JObject() { }
-        public JObject(JObject obj) => m_Children = obj.m_Children;
+        public JsonObject() { }
+        public JsonObject(JsonObject obj) => m_Children = obj.m_Children;
 
         public object? this[string key]
         {
@@ -32,7 +21,7 @@ namespace CorpseLib.Json
         {
             if (TryGet(key, type, out object? ret))
                 return ret;
-            throw new JException(string.Format("No node {0} in the JSON", key));
+            throw new JsonException(string.Format("No node {0} in the JSON", key));
         }
 
         public T? Get<T>(string key) => (T?)Get(key, typeof(T));
@@ -49,9 +38,9 @@ namespace CorpseLib.Json
 
         public bool TryGet(string key, Type type, out object? ret)
         {
-            JNode? token = m_Children.GetValueOrDefault(key);
+            JsonNode? token = m_Children.GetValueOrDefault(key);
             if (token != null)
-                return JHelper.Cast(token, out ret, type);
+                return JsonHelper.Cast(token, out ret, type);
             ret = default;
             return false;
         }
@@ -70,12 +59,12 @@ namespace CorpseLib.Json
         public List<object> GetList(string key, Type type)
         {
             List<object> ret = [];
-            JNode? token = m_Children.GetValueOrDefault(key);
-            if (token != null && token is JArray arr)
+            JsonNode? token = m_Children.GetValueOrDefault(key);
+            if (token != null && token is JsonArray arr)
             {
-                foreach (JNode item in arr)
+                foreach (JsonNode item in arr)
                 {
-                    if (JHelper.Cast(item, out object? cast, type))
+                    if (JsonHelper.Cast(item, out object? cast, type))
                         ret.Add(cast!);
                 }
             }
@@ -85,27 +74,27 @@ namespace CorpseLib.Json
         public List<T> GetList<T>(string key) => GetList(key, typeof(T)).Cast<T>().ToList();
 
         [Obsolete("Please use Add instead of Set")]
-        public void Set(string key, object? obj) => m_Children[key] = JHelper.Cast(obj);
+        public void Set(string key, object? obj) => m_Children[key] = JsonHelper.Cast(obj);
 
-        public void Add(string key, object? obj) => m_Children[key] = JHelper.Cast(obj);
+        public void Add(string key, object? obj) => m_Children[key] = JsonHelper.Cast(obj);
 
-        public JNode? Get(string name) => m_Children.GetValueOrDefault(name);
+        public JsonNode? Get(string name) => m_Children.GetValueOrDefault(name);
 
-        public override void ToJson(ref JBuilder builder)
+        protected override void AppendToWriter(ref JsonWriter writer)
         {
-            builder.OpenObject();
+            writer.OpenObject();
             int i = 0;
             foreach (var child in m_Children)
             {
                 if (i++ > 0)
-                    builder.AppendSeparator();
-                builder.AppendName(child.Key);
-                child.Value.ToJson(ref builder);
+                    writer.AppendSeparator();
+                writer.AppendName(child.Key);
+                AppendObject(ref writer, child.Value);
             }
-            builder.CloseObject();
+            writer.CloseObject();
         }
 
-        public IEnumerator<KeyValuePair<string, JNode>> GetEnumerator() => ((IEnumerable<KeyValuePair<string, JNode>>)m_Children).GetEnumerator();
+        public IEnumerator<KeyValuePair<string, JsonNode>> GetEnumerator() => ((IEnumerable<KeyValuePair<string, JsonNode>>)m_Children).GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)m_Children).GetEnumerator();
     }

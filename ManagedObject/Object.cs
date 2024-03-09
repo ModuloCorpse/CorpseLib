@@ -29,7 +29,7 @@ namespace CorpseLib.ManagedObject
             m_IsSerializable = isSerializable;
         }
 
-        protected Object(JObject json)
+        protected Object(JsonObject json)
         {
             string id = json.GetOrDefault("id", Guid.NewGuid().ToString())!;
             string name = json.GetOrDefault("name", string.Empty);
@@ -37,28 +37,28 @@ namespace CorpseLib.ManagedObject
             Load(json);
         }
 
-        internal void Fill(JObject json) => Load(json);
+        internal void Fill(JsonObject json) => Load(json);
 
         public bool IsSerializable() => m_IsSerializable;
 
         public void SetParent(CRTP parent) => m_Parent = parent;
 
-        internal JFile Serialize()
+        internal JsonObject Serialize()
         {
-            JFile json = new()
+            JsonObject json = new()
             {
                 { "id", ID },
                 { "name", Name }
             };
             if (m_Parent != null)
                 json.Add("parent", m_Parent.ID);
-            JObject obj = json;
+            JsonObject obj = json;
             Save(ref obj);
             return json;
         }
 
-        abstract protected void Save(ref JObject json);
-        abstract protected void Load(JObject json);
+        abstract protected void Save(ref JsonObject json);
+        abstract protected void Load(JsonObject json);
 
         public override bool Equals(object? obj) => (obj != null && obj is Object<CRTP> other && other.ID == ID);
 

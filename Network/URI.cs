@@ -235,6 +235,13 @@ namespace CorpseLib.Network
 
         public static URI Create(string host, int port) => new(string.Empty, new(string.Empty, host, port), string.Empty, string.Empty, string.Empty);
 
+        public static URI? NullParse(string? url)
+        {
+            if (url == null)
+                return null;
+            return Parse(url);
+        }
+
         public static URI Parse(string url)
         {
             string scheme;

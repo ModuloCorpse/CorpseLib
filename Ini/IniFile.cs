@@ -1,62 +1,19 @@
-﻿using System.Collections;
-using System.Text;
+﻿using CorpseLib.Datafile;
+using System.Collections;
 
 namespace CorpseLib.Ini
 {
-    public class IniFile : IEnumerable<IniSection>
+    public class IniFile : DataFileObject<IniWriter>, IEnumerable<IniSection>
     {
         private readonly Dictionary<string, IniSection> m_Sections = [];
         private IniSection? m_EmptySection;
         public IniSection? this[string key]
         {
             get => Get(key);
-            set => AddSection(value);
+            set => Add(value);
         }
 
         public bool HaveEmptySection => m_EmptySection != null;
-
-
-        private static IniFile GetParseResult(OperationResult<IniFile> result) => (result && result.Result != null) ? result.Result : new();
-        public static IniFile ParseFile(string path) => GetParseResult(TryParseFile(path));
-        public static OperationResult<IniFile> TryParseFile(string path) => File.Exists(path) ? TryParse(File.ReadAllText(path)) : new("Cannot load ini file", string.Format("File not found: {0}", path));
-
-        public static IniFile Parse(string content) => GetParseResult(TryParse(content));
-        public static OperationResult<IniFile> TryParse(string content)
-        {
-            IniFile ret = new();
-            string[] lines = content.Split(Environment.NewLine);
-            IniSection section = [];
-            bool hasRead = false;
-            int i = 0;
-            foreach (string line in lines)
-            {
-                if (!string.IsNullOrEmpty(line))
-                {
-                    if (line[0] == '[' && line[^1] == ']')
-                    {
-                        if (hasRead)
-                            ret.AddSection(section);
-                        section = new(line[1..^1]);
-                        hasRead = false;
-                    }
-                    else
-                    {
-                        int keyPos = line.IndexOf('=');
-                        if (keyPos != -1)
-                        {
-                            section.Add(line[..keyPos].Trim(), line[(keyPos + 1)..].Trim());
-                            hasRead = true;
-                        }
-                        else
-                            return new("Invalid ini file", string.Format("Invalid line {0}", i));
-                    }
-                }
-                ++i;
-            }
-            if (hasRead)
-                ret.AddSection(section);
-            return new(ret);
-        }
 
         public IniSection? Get(string key)
         {
@@ -87,7 +44,7 @@ namespace CorpseLib.Ini
                 m_Sections[name] = [];
         }
 
-        public void AddSection(IniSection? section)
+        public void Add(IniSection? section)
         {
             if (section == null)
                 return;
@@ -109,26 +66,24 @@ namespace CorpseLib.Ini
 
         public void Merge(IniFile file)
         {
-            AddSection(file.m_EmptySection?.Duplicate());
+            Add(file.m_EmptySection?.Duplicate());
             foreach (IniSection section in file)
-                AddSection(section.Duplicate());
+                Add(section.Duplicate());
         }
 
-        public override string ToString()
+        protected override void AppendToWriter(ref IniWriter writer)
         {
-            StringBuilder sb = new();
             if (m_EmptySection != null)
-                sb.Append(m_EmptySection);
+                AppendObject(ref writer, m_EmptySection);
             foreach (IniSection section in m_Sections.Values)
             {
-                if (sb.Length > 0)
+                if (writer.Length > 0)
                 {
-                    sb.AppendLine();
-                    sb.AppendLine();
+                    writer.LineBreak();
+                    writer.LineBreak();
                 }
-                sb.Append(section);
+                AppendObject(ref writer, section);
             }
-            return sb.ToString();
         }
 
         public void WriteToFile(string path) => File.WriteAllText(path, ToString());

@@ -1,10 +1,9 @@
-﻿namespace CorpseLib.Json
+﻿namespace CorpseLib.Datafile
 {
-    public class JFormat
+    public class DataFileFormat()
     {
         public string IndentStr = "\t";
         public bool DoIndent = true;
         public bool DoLineBreak = true;
-        public bool InlineScope = true;
     }
 }

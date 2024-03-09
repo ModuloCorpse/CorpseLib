@@ -1,5 +1,4 @@
 ﻿using CorpseLib.Logging;
-using System.Text;
 
 namespace CorpseLib.Network
 {

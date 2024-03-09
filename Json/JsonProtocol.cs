@@ -4,7 +4,7 @@ using System.Text;
 
 namespace CorpseLib.Json
 {
-    public abstract class JProtocol : AProtocol
+    public abstract class JsonProtocol : AProtocol
     {
         private string m_Buffer = string.Empty;
 
@@ -16,15 +16,17 @@ namespace CorpseLib.Json
 
         protected sealed override void Write(BytesWriter writer, object packet)
         {
-            if (packet is JNode node)
-                writer.Write(node.ToNetworkString());
+            if (packet is JsonObject obj)
+                writer.Write(obj.ToNetworkString());
+            else if (packet is string str)
+                writer.Write(str);
             else
                 writer.Write(packet);
         }
 
         protected sealed override OperationResult<object> Read(BytesReader reader)
         {
-            string originalBuffer = m_Buffer;
+            int originalBufferLength = Encoding.UTF8.GetByteCount(m_Buffer);
             m_Buffer += Encoding.UTF8.GetString(reader.Bytes);
             int i = 0;
             while (i < m_Buffer.Length && char.IsWhiteSpace(m_Buffer[i]))
@@ -58,22 +60,22 @@ namespace CorpseLib.Json
                 return new(null);
             }
             string jsonString = m_Buffer[..i];
-            int readLength = Encoding.UTF8.GetByteCount(jsonString) - Encoding.UTF8.GetByteCount(originalBuffer);
-            JReader jreader = new(jsonString.Trim());
+            int readLength = Encoding.UTF8.GetByteCount(jsonString) - originalBufferLength;
             try
             {
-                JNode node = jreader.ReadNext();
+                JsonObject node = JsonParser.Parse(jsonString);
                 _ = reader.ReadBytes(readLength);
+                m_Buffer = string.Empty;
                 return new(node);
             }
-            catch (JException e)
+            catch (JsonException e)
             {
                 return new("Deserialization error", e.Message);
             }
         }
 
-        protected sealed override void Treat(object packet) => OnReceive((JObject)packet);
+        protected sealed override void Treat(object packet) => OnReceive((JsonObject)packet);
 
-        protected abstract void OnReceive(JObject obj);
+        protected abstract void OnReceive(JsonObject obj);
     }
 }

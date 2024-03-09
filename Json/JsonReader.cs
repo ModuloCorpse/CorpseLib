@@ -1,52 +1,21 @@
-﻿using System.Text;
+﻿using CorpseLib.Datafile;
+using System.Text;
 
 namespace CorpseLib.Json
 {
-    public class JReader(string content)
+    public class JsonReader() : DataFileReader<JsonObject, JsonWriter>()
     {
-        private readonly string m_Content = content.Trim();
-        private int m_Idx = 0;
-
-        private static bool IsWhitespace(char c) => c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\v' || c == '\f';
-
-        private void SkipWhitespace()
-        {
-            if (m_Idx < m_Content.Length)
-            {
-                char c = m_Content[m_Idx];
-                while (IsWhitespace(c) || (m_Idx == m_Content.Length))
-                    c = m_Content[++m_Idx];
-            }
-        }
-
-        private bool StartWith(string content)
-        {
-            int n = m_Idx;
-            int i = 0;
-            while (n != m_Content.Length && i != content.Length)
-            {
-                if (m_Content[n] != content[i])
-                    return false;
-                ++i;
-                ++n;
-            }
-            if (i == content.Length)
-            {
-                m_Idx += content.Length;
-                return true;
-            }
-            return false;
-        }
-
         private string ReadString()
         {
             StringBuilder stringBuilder = new();
-            while (m_Idx != m_Content.Length)
+            while (CanRead)
             {
-                char c = m_Content[++m_Idx];
+                Next();
+                char c = Current;
                 if (c == '\\')
                 {
-                    c = m_Content[++m_Idx];
+                    Next();
+                    c = Current;
                     switch (c)
                     {
                         case '\'': stringBuilder.Append('\''); break;
@@ -62,31 +31,32 @@ namespace CorpseLib.Json
                 }
                 else if (c == '"')
                 {
-                    ++m_Idx;
+                    Next();
                     return stringBuilder.ToString();
                 }
                 else
                     stringBuilder.Append(c);
             }
-            throw new JException("Unclosed string");
+            throw new JsonException("Unclosed string");
         }
 
-        private JNull ReadNull()
+        private JsonNull ReadNull()
         {
             if (StartWith("ull"))
                 return new();
-            throw new JException("Not a valid value");
+            throw new JsonException("Not a valid value");
         }
 
-        private JValue ReadNextValue()
+        private JsonValue ReadNextValue()
         {
-            --m_Idx;
+            Previous();
             return ReadValue();
         }
 
         private double ReadNumber(bool canBeNegative)
         {
-            char c = m_Content[m_Idx++];
+            char c = Current;
+            Next();
             double value = 0;
             bool isNegative = false;
             if (c == '-')
@@ -94,29 +64,29 @@ namespace CorpseLib.Json
                 if (canBeNegative)
                     isNegative = true;
                 else
-                    throw new JException("Missformated number");
+                    throw new JsonException("Missformated number");
             }
             else if (c >= '0' && c <= '9')
                 value = (c - '0');
             else
-                throw new JException("Misformatted json : Missformated number");
+                throw new JsonException("Misformatted json : Missformated number");
             do
             {
-                c = m_Content[m_Idx];
+                c = Current;
                 if (c >= '0' && c <= '9')
                 {
-                    m_Idx++;
+                    Next();
                     value = (value * 10) + (c - '0');
                 }
-            } while (m_Idx != m_Content.Length && c >= '0' && c <= '9');
-            if (m_Idx == m_Content.Length)
-                throw new JException("Misformatted json : Json ended with a number");
+            } while (CanRead && c >= '0' && c <= '9');
+            if (!CanRead)
+                throw new JsonException("Misformatted json : Json ended with a number");
             return isNegative ? -value : value;
         }
 
-        private JValue ReadValue()
+        private JsonValue ReadValue()
         {
-            char c = m_Content[m_Idx];
+            char c = Current;
             if (c == '"')
             {
                 string str = ReadString();
@@ -132,37 +102,33 @@ namespace CorpseLib.Json
             {
                 bool isDecimal = false;
                 double value = ReadNumber(true);
-                c = m_Content[m_Idx];
+                c = Current;
                 if (c == '.')
                 {
-                    ++m_Idx;
+                    Next();
                     isDecimal = true;
                     double dec = ReadNumber(false);
                     while (dec >= 1)
                         dec /= 10;
                     value += dec;
                 }
-                c = m_Content[m_Idx];
+                c = Current;
                 if (c == 'E' || c == 'e')
                 {
-                    ++m_Idx;
-                    if (m_Content[m_Idx] == '+')
-                        ++m_Idx;
-                    bool negativeExponent = false;
+                    Next();
+                    if (Current == '+')
+                        Next();
                     long exponent = (long)ReadNumber(true);
 
                     if (exponent < 0)
                     {
-                        exponent = -exponent;
-                        negativeExponent = true;
+                        for (long u = 0; u != (-exponent); u++)
+                            value /= 10;
                         isDecimal = true;
                     }
-
-                    for (long u = 0; u != exponent; u++)
+                    else
                     {
-                        if (negativeExponent)
-                            value /= 10;
-                        else
+                        for (long u = 0; u != exponent; u++)
                             value *= 10;
                     }
                 }
@@ -197,75 +163,77 @@ namespace CorpseLib.Json
             }
         }
 
-        private void ReadArray(JArray array)
+        private void ReadArray(JsonArray array)
         {
             SkipWhitespace();
-            while (m_Idx != m_Content.Length)
+            while (CanRead)
             {
-                char c = m_Content[m_Idx];
+                char c = Current;
                 if (c == ']')
                 {
-                    ++m_Idx;
+                    Next();
                     return;
                 }
                 else if (c != ',')
                 {
                     if (!array.Add(ReadNext()))
-                        throw new JException("Missformated array: Multiple element type within array");
+                        throw new JsonException("Missformated array: Multiple element type within array");
                 }
                 else
-                    ++m_Idx;
+                    Next();
                 SkipWhitespace();
             }
-            throw new JException("Missformated array: Missing ]");
+            throw new JsonException("Missformated array: Missing ]");
         }
 
-        private JArray ReadArray()
+        private JsonArray ReadArray()
         {
-            JArray array = [];
+            JsonArray array = [];
             ReadArray(array);
             return array;
         }
 
-        private void ReadObject(JObject obj)
+        private void ReadObject(JsonObject obj)
         {
             SkipWhitespace();
-            while (m_Idx != m_Content.Length)
+            while (CanRead)
             {
-                char c = m_Content[m_Idx];
+                char c = Current;
                 if (c == '}')
                 {
-                    ++m_Idx;
+                    Next();
                     return;
                 }
                 else if (c == '"')
                 {
                     string name = ReadString();
                     SkipWhitespace();
-                    c = m_Content[m_Idx];
+                    c = Current;
                     if (c != ':')
-                        throw new JException("Missformated object: Missing \":\" after property name");
-                    ++m_Idx;
+                        throw new JsonException("Missformated object: Missing \":\" after property name");
+                    Next();
                     SkipWhitespace();
                     obj.Add(name, ReadNext());
                 }
                 else
-                    ++m_Idx;
+                    Next();
                 SkipWhitespace();
             }
-            throw new JException("Missformated object: Missing }");
+            throw new JsonException("Missformated object: Missing }");
         }
 
-        private JObject ReadObject()
+        private JsonObject ReadObject()
         {
-            JObject obj = [];
+            JsonObject obj = [];
             ReadObject(obj);
             return obj;
         }
 
-        public JNode ReadNext()
+        private JsonNode ReadNext()
         {
-            char c = m_Content[m_Idx++];
+            SkipWhitespace();
+            char c = Current;
+            Next();
             return c switch
             {
                 '{' => ReadObject(),
@@ -275,24 +243,14 @@ namespace CorpseLib.Json
             };
         }
 
-        public JObject Read()
+        public override JsonObject Read()
         {
             SkipWhitespace();
-            if (m_Idx == m_Content.Length)
-                throw new JException("Empty Json");
-            if (m_Content[m_Idx] != '{')
-                throw new JException("Json should start with a {");
+            if (!CanRead)
+                throw new JsonException("Empty Json");
+            if (Current != '{')
+                throw new JsonException("Json should start with a {");
             return ReadObject();
-        }
-
-        public void Read(JObject obj)
-        {
-            SkipWhitespace();
-            if (m_Idx == m_Content.Length)
-                throw new JException("Empty Json");
-            if (m_Content[m_Idx] != '{')
-                throw new JException("Json should start with a {");
-            ReadObject(obj);
         }
     }
 }

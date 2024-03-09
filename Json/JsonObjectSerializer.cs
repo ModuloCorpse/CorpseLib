@@ -3,21 +3,20 @@ using System.Text;
 
 namespace CorpseLib.Json
 {
-    public class JNodeSerializer : ABytesSerializer<JNode>
+    public class JsonObjectSerializer : ABytesSerializer<JsonObject>
     {
-        protected override OperationResult<JNode> Deserialize(BytesReader reader)
+        protected override OperationResult<JsonObject> Deserialize(BytesReader reader)
         {
-            JReader jreader = new(reader.ReadString(reader.ReadInt()));
             try
             {
-                return new(jreader.ReadNext());
-            } catch (JException e)
+                return new(JsonParser.Parse(reader.ReadString(reader.ReadInt())));
+            } catch (JsonException e)
             {
                 return new("Deserialization error", e.Message);
             }
         }
 
-        protected override void Serialize(JNode obj, BytesWriter writer)
+        protected override void Serialize(JsonObject obj, BytesWriter writer)
         {
             string str = obj.ToNetworkString();
             writer.Write(Encoding.UTF8.GetByteCount(str));

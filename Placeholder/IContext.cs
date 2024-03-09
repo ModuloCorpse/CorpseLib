@@ -2,7 +2,7 @@
 {
     public interface IContext
     {
-        public string? Call(string functionName, string[] args);
+        public string? Call(string functionName, string[] args, Cache cache);
         public string? GetVariable(string name);
     }
 }

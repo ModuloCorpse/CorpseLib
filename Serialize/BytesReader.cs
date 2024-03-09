@@ -97,7 +97,7 @@ namespace CorpseLib.Serialize
             m_Idx += nb;
             return ret;
         }
-        public byte[] ReadPBytes(int nb, bool reverse)
+        private byte[] ReadPBytes(int nb, bool reverse)
         {
             byte[] bytes = ReadBytes(nb);
             if (bytes.Length > 1 && reverse)
@@ -121,6 +121,7 @@ namespace CorpseLib.Serialize
         public ulong ReadULong() => BitConverter.ToUInt16(ReadPBytes(sizeof(ulong), BitConverter.IsLittleEndian), 0);
         public float ReadFloat() => BitConverter.ToSingle(ReadPBytes(sizeof(float), BitConverter.IsLittleEndian), 0);
         public double ReadDouble() => BitConverter.ToDouble(ReadPBytes(sizeof(double), BitConverter.IsLittleEndian), 0);
+        public decimal ReadDecimal() => BytesHelper.ToDecimal(ReadPBytes(sizeof(decimal), BitConverter.IsLittleEndian), 0);
         public int ReadInt(bool reverse) => BitConverter.ToInt32(ReadPBytes(sizeof(int), reverse), 0);
         public uint ReadUInt(bool reverse) => BitConverter.ToUInt32(ReadPBytes(sizeof(uint), reverse), 0);
         public short ReadShort(bool reverse) => BitConverter.ToInt16(ReadPBytes(sizeof(short), reverse), 0);
@@ -129,9 +130,11 @@ namespace CorpseLib.Serialize
         public ulong ReadULong(bool reverse) => BitConverter.ToUInt16(ReadPBytes(sizeof(ulong), reverse), 0);
         public float ReadFloat(bool reverse) => BitConverter.ToSingle(ReadPBytes(sizeof(float), reverse), 0);
         public double ReadDouble(bool reverse) => BitConverter.ToDouble(ReadPBytes(sizeof(double), reverse), 0);
+        public decimal ReadDecimal(bool reverse) => BytesHelper.ToDecimal(ReadPBytes(sizeof(decimal), reverse), 0);
         public string ReadString(int length) => Encoding.UTF8.GetString(ReadBytes(length));
         public string ReadString() => Encoding.UTF8.GetString(ReadBytes(ReadInt()));
         public Guid ReadGuid() => new(ReadBytes(16));
+        public DateTime ReadDateTime() => DateTime.FromBinary(ReadLong());
 
         public OperationResult<T> Read<T>()
         {

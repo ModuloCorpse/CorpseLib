@@ -4,33 +4,7 @@ namespace CorpseLib.Placeholder
 {
     public static class Converter
     {
-        private class FunctionResult
-        {
-            private readonly string[] m_Arguments;
-            private readonly string m_Result;
-
-            internal FunctionResult(string[] arguments, string result)
-            {
-                m_Arguments = arguments;
-                m_Result = result;
-            }
-
-            internal bool MatchArguments(string[] args)
-            {
-                if (args.Length != m_Arguments.Length)
-                    return false;
-                for (int i = 0; i < m_Arguments.Length; ++i)
-                {
-                    if (m_Arguments[i] != args[i])
-                        return false;
-                }
-                return true;
-            }
-
-            internal string Result => m_Result;
-        }
-
-        private static string TreatVariable(string content, IContext[] contexts, ref Dictionary<string, List<FunctionResult>> fctResults, out bool treated)
+        private static string TreatVariable(string content, IContext[] contexts, Cache cache, out bool treated)
         {
             treated = true;
             if (string.IsNullOrEmpty(content))
@@ -52,10 +26,10 @@ namespace CorpseLib.Placeholder
                 int pos = content.IndexOf(" || ");
                 string variable = content[..pos];
                 string variableReplacement = content[(pos + 4)..];
-                string treatedVariableResult = TreatVariable(variable.Trim(), contexts, ref fctResults, out bool isTreated);
+                string treatedVariableResult = TreatVariable(variable.Trim(), contexts, cache, out bool isTreated);
                 if (isTreated)
                     return treatedVariableResult;
-                return TreatVariable(variableReplacement.Trim(), contexts, ref fctResults, out treated);
+                return TreatVariable(variableReplacement.Trim(), contexts, cache, out treated);
             }
             else if (content.Contains('('))
             {
@@ -65,7 +39,7 @@ namespace CorpseLib.Placeholder
                 List<string> argumentsList = [];
                 foreach (string functionVariable in functionVariables.Split(','))
                 {
-                    string treatedVariableResult = TreatVariable(functionVariable.Trim(), contexts, ref fctResults, out bool isTreated);
+                    string treatedVariableResult = TreatVariable(functionVariable.Trim(), contexts, cache, out bool isTreated);
                     if (!isTreated)
                     {
                         treated = false;
@@ -74,22 +48,14 @@ namespace CorpseLib.Placeholder
                     argumentsList.Add(treatedVariableResult);
                 }
                 string[] arguments = [.. argumentsList];
-                if (fctResults.TryGetValue(functionName, out var fctResult))
-                {
-                    foreach (FunctionResult functionResult in fctResult)
-                    {
-                        if (functionResult.MatchArguments(arguments))
-                            return functionResult.Result;
-                    }
-                }
+                if (cache.TryGetFunctionResult(functionName, arguments, out string? cachedResult) && cachedResult != null)
+                    return cachedResult;
                 foreach (IContext context in contexts)
                 {
-                    string? ret = context.Call(functionName, arguments);
+                    string? ret = context.Call(functionName, arguments, cache);
                     if (ret != null)
                     {
-                        if (!fctResults.ContainsKey(functionName))
-                            fctResults[functionName] = [];
-                        fctResults[functionName].Add(new(arguments, ret));
+                        cache.CacheFunctionResult(functionName, arguments, ret);
                         return ret;
                     }
                 }
@@ -106,14 +72,14 @@ namespace CorpseLib.Placeholder
             return content;
         }
 
-        public static string Convert(string str, params IContext[] context)
+        public static string Convert(string str, params IContext[] context) => Convert(str, new(), context);
+
+        public static string Convert(string str, Cache cache, params IContext[] context)
         {
             if (string.IsNullOrWhiteSpace(str))
                 return str;
             bool isVariable = false;
             char previous = '\0';
-            Dictionary<string, string> treatedVariables = [];
-            Dictionary<string, List<FunctionResult>> results = [];
             StringBuilder builder = new();
             StringBuilder variableBuilder = new();
             foreach (char c in str)
@@ -124,12 +90,12 @@ namespace CorpseLib.Placeholder
                     {
                         isVariable = false;
                         string variable = variableBuilder.ToString();
-                        if (treatedVariables.TryGetValue(variable, out var result))
+                        if (cache.TryGetTreatedVariable(variable, out var result))
                             builder.Append(result);
                         else
                         {
-                            string treatedVariable = TreatVariable(variable, context, ref results, out bool _);
-                            treatedVariables[variable] = treatedVariable;
+                            string treatedVariable = TreatVariable(variable, context, cache, out bool _);
+                            cache.CacheTreatedVariable(variable, treatedVariable);
                             builder.Append(treatedVariable);
                         }
                         variableBuilder.Clear();
@@ -153,5 +119,7 @@ namespace CorpseLib.Placeholder
             }
             return builder.ToString();
         }
+
+        //TODO Create analytics tool to get all variables from placeholder string
     }
 }

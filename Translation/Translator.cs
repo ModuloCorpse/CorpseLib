@@ -47,12 +47,12 @@ namespace CorpseLib.Translation
                 LoadFile(translationFile);
         }
 
+        //TODO Allow XLIFF and other file format
         public static void LoadFile(string path)
         {
             if (File.Exists(path))
             {
-                string content = File.ReadAllText(path);
-                IniFile ini = IniFile.Parse(content);
+                IniFile ini = IniParser.LoadFromFile(path);
                 if (!ini.HaveEmptySection)
                 {
                     foreach (IniSection section in ini)
@@ -97,7 +97,7 @@ namespace CorpseLib.Translation
         {
             IniFile file = new();
             foreach (Translation translation in ms_Translations.Values)
-                file.AddSection(translation.ToIniSection());
+                file.Add(translation.ToIniSection());
             File.WriteAllText(path, file.ToString().Trim());
         }
 

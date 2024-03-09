@@ -47,6 +47,13 @@ namespace CorpseLib.Serialize
         public void Write(ulong value) => WriteP(value);
         public void Write(float value) => WriteP(value);
         public void Write(double value) => WriteP(value);
+        private void Write(decimal value)
+        {
+            byte[] bytes = BytesHelper.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(bytes);
+            Write(bytes);
+        }
         public void Write(string str) => Write(Encoding.UTF8.GetBytes(str));
         public void WriteWithLength(string str)
         {
@@ -55,6 +62,7 @@ namespace CorpseLib.Serialize
             Write(bytes);
         }
         public void Write(Guid guid) => Write(guid.ToByteArray());
+        public void Write(DateTime dateTime) => Write(dateTime.Ticks);
         public void Write<T>(T obj) => m_Serializer.GetSerializerFor(typeof(T))?.SerializeObj(obj!, this);
         public void Write(object obj) => m_Serializer.GetSerializerFor(obj.GetType())?.SerializeObj(obj, this);
     }

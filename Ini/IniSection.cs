@@ -1,9 +1,9 @@
-﻿using System.Collections;
-using System.Text;
+﻿using CorpseLib.Datafile;
+using System.Collections;
 
 namespace CorpseLib.Ini
 {
-    public class IniSection : IEnumerable<KeyValuePair<string, string>>
+    public class IniSection : DataFileObject<IniWriter>, IEnumerable<KeyValuePair<string, string>>
     {
         private readonly Dictionary<string, string> m_Properties = [];
         private readonly string m_Name;
@@ -71,29 +71,22 @@ namespace CorpseLib.Ini
 
         public IniSection Duplicate() => new(m_Name) { m_Properties };
 
-        public override string ToString()
+        protected override void AppendToWriter(ref IniWriter writer)
         {
-            StringBuilder sb = new();
             if (!string.IsNullOrEmpty(m_Name))
             {
-                sb.Append('[');
-                sb.Append(m_Name);
-                sb.Append(']');
-                sb.AppendLine();
+                writer.Append(string.Format("[{0}]", m_Name));
+                writer.LineBreak();
             }
 
             int i = 0;
             foreach (var pair in m_Properties)
             {
                 if (i > 0)
-                    sb.AppendLine();
-                sb.Append(pair.Key);
-                sb.Append('=');
-                sb.Append(pair.Value);
+                    writer.LineBreak();
+                writer.Append(string.Format("{0}={1}", pair.Key, pair.Value));
                 ++i;
             }
-
-            return sb.ToString();
         }
 
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => ((IEnumerable<KeyValuePair<string, string>>)m_Properties).GetEnumerator();

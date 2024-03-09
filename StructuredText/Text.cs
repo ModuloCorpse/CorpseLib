@@ -6,10 +6,10 @@ namespace CorpseLib.StructuredText
 {
     public class Text : IEnumerable<Section>
     {
-        public class JSerializer : AJSerializer<Text>
+        public class JSerializer : AJsonSerializer<Text>
         {
-            protected override OperationResult<Text> Deserialize(JObject reader) => new(new(reader.GetList<Section>("sections")));
-            protected override void Serialize(Text obj, JObject writer) => writer["sections"] = obj.m_Sections;
+            protected override OperationResult<Text> Deserialize(JsonObject reader) => new(new(reader.GetList<Section>("sections")));
+            protected override void Serialize(Text obj, JsonObject writer) => writer["sections"] = obj.m_Sections;
         }
 
         private readonly List<Section> m_Sections = [];

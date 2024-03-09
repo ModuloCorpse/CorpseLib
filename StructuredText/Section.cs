@@ -5,14 +5,14 @@ namespace CorpseLib.StructuredText
 {
     public class Section
     {
-        public class JSerializer : AJSerializer<Section>
+        public class JSerializer : AJsonSerializer<Section>
         {
-            protected override OperationResult<Section> Deserialize(JObject reader)
+            protected override OperationResult<Section> Deserialize(JsonObject reader)
             {
-                JNode? propertiesNode = reader.Get("properties");
-                if (propertiesNode != null && propertiesNode is JObject propertiesObj)
+                JsonNode? propertiesNode = reader.Get("properties");
+                if (propertiesNode != null && propertiesNode is JsonObject propertiesObj)
                 {
-                    Dictionary<string, object> properties = (Dictionary<string, object>)JHelper.Flatten(propertiesObj)!;
+                    Dictionary<string, object> properties = (Dictionary<string, object>)JsonHelper.Flatten(propertiesObj)!;
                     if (reader.TryGet("content", out string? content))
                     {
                         if (reader.TryGet("type", out Type? type))
@@ -29,10 +29,10 @@ namespace CorpseLib.StructuredText
                 return new("Bad json", "No properties");
             }
 
-            protected override void Serialize(Section obj, JObject writer)
+            protected override void Serialize(Section obj, JsonObject writer)
             {
                 if (obj.m_Properties.Count == 0)
-                    writer["properties"] = new JObject();
+                    writer["properties"] = new JsonObject();
                 else
                     writer["properties"] = obj.m_Properties;
                 writer["content"] = obj.m_Content;

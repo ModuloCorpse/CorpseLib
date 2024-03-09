@@ -74,7 +74,7 @@ namespace CorpseLib.ManagedObject
                     string objID = Path.GetFileNameWithoutExtension(file);
                     try
                     {
-                        JFile json = JFile.LoadFromFile(file);
+                        JsonObject json = JsonParser.LoadFromFile(file);
                         if (objID == "settings")
                         {
                             currentID = json.GetOrDefault("current", string.Empty);
@@ -120,15 +120,15 @@ namespace CorpseLib.ManagedObject
             if (!Directory.Exists(m_DirPath))
                 Directory.CreateDirectory(m_DirPath);
 
-            JFile json = [];
+            JsonObject json = [];
             json.Add("current", m_CurrentObject?.ID ?? string.Empty);
             SaveSettings(ref json);
-            json.WriteToFile(string.Format("{0}/settings.json", m_DirPath));
+            JsonParser.WriteToFile(string.Format("{0}/settings.json", m_DirPath), json);
 
             foreach (var obj in m_Objects.Values)
             {
                 if (obj.IsSerializable())
-                    obj.Serialize().WriteToFile(string.Format("{0}/{1}.json", m_DirPath, obj.ID));
+                    JsonParser.WriteToFile(string.Format("{0}/{1}.json", m_DirPath, obj.ID), obj.Serialize());
             }
         }
 
@@ -138,9 +138,9 @@ namespace CorpseLib.ManagedObject
                 child.SetParent(parent);
         }
 
-        protected abstract T? DeserializeObject(JFile obj);
+        protected abstract T? DeserializeObject(JsonObject obj);
 
-        protected virtual void LoadSettings(JFile obj) { }
-        protected virtual void SaveSettings(ref JFile obj) { }
+        protected virtual void LoadSettings(JsonObject obj) { }
+        protected virtual void SaveSettings(ref JsonObject obj) { }
     }
 }

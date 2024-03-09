@@ -13,7 +13,7 @@ namespace CorpseLib.Translation
             m_DefaultTranslation = defaultTranslation;
             m_Translation = translation;
             m_Args = args;
-            AddFunction("Translate", (variables) => variables.Length switch
+            AddFunction("Translate", (variables, _) => variables.Length switch
             {
                 0 => string.Empty,
                 1 => Converter.Convert(variables[0], new TranslationContext(defaultTranslation, translation)),

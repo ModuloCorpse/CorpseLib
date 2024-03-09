@@ -1,35 +1,36 @@
-﻿using System.Collections;
+﻿using CorpseLib.Network;
+using System.Collections;
 
 namespace CorpseLib.Json
 {
-    public class JHelper
+    public class JsonHelper
     {
-        public static readonly JFormat NETWORK_FORMAT = new()
+        public static readonly JsonFormat NETWORK_FORMAT = new()
         {
             InlineScope = true,
             DoLineBreak = false,
             DoIndent = false,
         };
 
-        private static readonly Dictionary<Type, AJSerializer> ms_RegisteredSerializers = [];
+        private static readonly Dictionary<Type, AJsonSerializer> ms_RegisteredSerializers = [];
 
-        public static void RegisterSerializer<T>(AJSerializer<T> serializer) => ms_RegisteredSerializers[typeof(T)] = serializer;
+        public static void RegisterSerializer<T>(AJsonSerializer<T> serializer) => ms_RegisteredSerializers[typeof(T)] = serializer;
         public static void UnregisterSerializer<T>() => ms_RegisteredSerializers.Remove(typeof(T));
 
-        public static JSerializer NewSerializer()
+        public static JsonSerializer NewSerializer()
         {
-            JSerializer serializer = new();
-            foreach (AJSerializer registeredSerializer in ms_RegisteredSerializers.Values)
+            JsonSerializer serializer = new();
+            foreach (AJsonSerializer registeredSerializer in ms_RegisteredSerializers.Values)
                 serializer.Register(registeredSerializer);
             return serializer;
         }
 
-        public static bool Cast(JNode token, out object? ret, Type type)
+        public static bool Cast(JsonNode token, out object? ret, Type type)
         {
-            if (token is JObject jobj)
+            if (token is JsonObject jobj)
             {
-                JSerializer jSerializer = NewSerializer();
-                AJSerializer? serializer = jSerializer.GetSerializerFor(type);
+                JsonSerializer jSerializer = NewSerializer();
+                AJsonSerializer? serializer = jSerializer.GetSerializerFor(type);
                 if (serializer != null)
                 {
                     OperationResult<object?> result = serializer.DeserializeObj(jobj);
@@ -48,12 +49,12 @@ namespace CorpseLib.Json
                 ret = token;
                 return true;
             }
-            else if (token is JNull)
+            else if (token is JsonNull)
             {
                 ret = null;
                 return true;
             }
-            else if (token is JValue value)
+            else if (token is JsonValue value)
             {
                 try
                 {
@@ -61,13 +62,13 @@ namespace CorpseLib.Json
                     return true;
                 } catch (Exception ex) { Console.WriteLine(ex.Message); }
             }
-            else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>) && token is JArray arr)
+            else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>) && token is JsonArray arr)
             {
                 Type listType = type.GetGenericArguments()[0];
                 IList? list = (IList?)Activator.CreateInstance(type);
                 if (list != null)
                 {
-                    foreach (JNode item in arr)
+                    foreach (JsonNode item in arr)
                     {
                         if (Cast(item, out object? listRet, listType))
                             list.Add(listRet);
@@ -80,7 +81,7 @@ namespace CorpseLib.Json
             return false;
         }
 
-        public static bool Cast<T>(JNode token, out T? ret)
+        public static bool Cast<T>(JsonNode token, out T? ret)
         {
             if (Cast(token, out object? tmp, typeof(T)))
             {
@@ -91,55 +92,57 @@ namespace CorpseLib.Json
             return false;
         }
 
-        public static JNode Cast(object? item)
+        public static JsonNode Cast(object? item)
         {
             if (item == null)
-                return new JNull();
-            if (item is JNode node)
+                return new JsonNull();
+            if (item is JsonNode node)
                 return node;
             Type itemType = item.GetType();
             if (itemType.IsPrimitive || itemType.IsEnum || itemType == typeof(decimal) || itemType == typeof(string))
-                return new JValue(item);
+                return new JsonValue(item);
             if (item is IDictionary dict && itemType.GetGenericArguments()[0] == typeof(string))
             {
-                JObject obj = [];
+                JsonObject obj = [];
                 foreach (DictionaryEntry pair in dict)
                     obj[(string)pair.Key] = pair.Value;
                 return obj;
             }
             else if ((itemType.IsArray || item is IList) && item is IEnumerable enumerable)
             {
-                JArray arr = [];
+                JsonArray arr = [];
                 foreach (object elem in enumerable)
                     arr.Add(Cast(elem));
                 return arr;
             }
-            JSerializer jSerializer = NewSerializer();
-            AJSerializer? serializer = jSerializer.GetSerializerFor(itemType);
+            else if (item is URI uri)
+                return new JsonValue(uri.ToString());
+            JsonSerializer jSerializer = NewSerializer();
+            AJsonSerializer? serializer = jSerializer.GetSerializerFor(itemType);
             if (serializer != null)
             {
-                JObject ret = [];
+                JsonObject ret = [];
                 serializer.SerializeObj(item, ret);
                 return ret;
             }
-            throw new JException(string.Format("Cannot cast item : No know conversion from '{0}' to json node", itemType.Name));
+            throw new JsonException(string.Format("Cannot cast item : No know conversion from '{0}' to json node", itemType.Name));
         }
 
-        public static object? Flatten(JNode node)
+        public static object? Flatten(JsonNode node)
         {
-            if (node is JValue val)
+            if (node is JsonValue val)
                 return val.Value;
-            else if (node is JObject obj)
+            else if (node is JsonObject obj)
             {
                 Dictionary<string, object?> ret = [];
-                foreach (KeyValuePair<string, JNode> pair in obj)
+                foreach (KeyValuePair<string, JsonNode> pair in obj)
                     ret[pair.Key] = Flatten(pair.Value);
                 return ret;
             }
-            else if (node is JArray arr)
+            else if (node is JsonArray arr)
             {
                 List<object?> ret = [];
-                foreach (JNode elem in arr)
+                foreach (JsonNode elem in arr)
                     ret.Add(Flatten(elem));
                 return ret;
             }

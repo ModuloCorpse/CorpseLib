@@ -32,6 +32,8 @@
             m_Task.Task.Wait();
             return m_Task.Task.Result;
         }
+
+        public bool Wait(TimeSpan timeout) => m_Task.Task.Wait(timeout) && m_Task.Task.Result;
     }
 
     public class Operation : AOperation

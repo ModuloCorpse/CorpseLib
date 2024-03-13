@@ -4,15 +4,15 @@ namespace CorpseLib.Database
 {
     public class DBEntrySerializer : ABytesSerializer<DB.Entry>
     {
-        protected override OperationResult<DB.Entry> Deserialize(BytesReader reader)
+        protected override OperationResult<DB.Entry> Deserialize(ABytesReader reader)
         {
-            Guid id = reader.ReadGuid();
-            int entryLength = reader.ReadInt();
+            Guid id = reader.Read<Guid>();
+            int entryLength = reader.Read<int>();
             byte[] entryBytes = reader.ReadBytes(entryLength);
             return new(new(id, entryBytes));
         }
 
-        protected override void Serialize(DB.Entry obj, BytesWriter writer)
+        protected override void Serialize(DB.Entry obj, ABytesWriter writer)
         {
             writer.Write(obj.Guid);
             writer.Write(obj.Content.Length);
@@ -22,20 +22,20 @@ namespace CorpseLib.Database
 
     public class DBSerializer : ABytesSerializer<DB>
     {
-        protected override OperationResult<DB> Deserialize(BytesReader reader)
+        protected override OperationResult<DB> Deserialize(ABytesReader reader)
         {
             DB db = new();
-            int nbEntries = reader.ReadInt();
+            int nbEntries = reader.Read<int>();
             for (int i = 0; i != nbEntries; ++i)
             {
-                OperationResult<DB.Entry> result = reader.Read<DB.Entry>();
+                OperationResult<DB.Entry> result = reader.SafeRead<DB.Entry>();
                 if (result && result.Result is DB.Entry entry)
                     db.Insert(entry);
             }
             return new(db);
         }
 
-        protected override void Serialize(DB obj, BytesWriter writer)
+        protected override void Serialize(DB obj, ABytesWriter writer)
         {
             IEnumerable<DB.Entry> entries = obj.Entries;
             writer.Write(entries.Count());

@@ -14,22 +14,21 @@ namespace CorpseLib.Database
         public void UnlockIdx() => m_BytesReader.UnlockIdx();
         public bool CanRead() => m_BytesReader.CanRead();
         public int IndexOf(byte[] key) => m_BytesReader.IndexOf(key);
-        public byte ReadByte() => m_BytesReader.ReadByte();
-        public sbyte ReadSByte() => m_BytesReader.ReadSByte();
+        public byte ReadByte() => m_BytesReader.Read<byte>();
+        public sbyte ReadSByte() => m_BytesReader.Read<sbyte>();
         public byte[] ReadBytes(int nb) => m_BytesReader.ReadBytes(nb);
         public byte[] ReadAll() => m_BytesReader.ReadAll();
-        public bool ReadBool() => m_BytesReader.ReadBool();
-        public char ReadChar() => m_BytesReader.ReadChar();
-        public int ReadInt() => m_BytesReader.ReadInt();
-        public uint ReadUInt() => m_BytesReader.ReadUInt();
-        public short ReadShort() => m_BytesReader.ReadShort();
-        public ushort ReadUShort() => m_BytesReader.ReadUShort();
-        public long ReadLong() => m_BytesReader.ReadLong();
-        public ulong ReadULong() => m_BytesReader.ReadULong();
-        public float ReadFloat() => m_BytesReader.ReadFloat();
-        public double ReadDouble() => m_BytesReader.ReadDouble();
-        public string ReadString(int length) => m_BytesReader.ReadString(length);
-        public string ReadString() => m_BytesReader.ReadString();
+        public bool ReadBool() => m_BytesReader.Read<bool>();
+        public char ReadChar() => m_BytesReader.Read<char>();
+        public int ReadInt() => m_BytesReader.Read<int>();
+        public uint ReadUInt() => m_BytesReader.Read<uint>();
+        public short ReadShort() => m_BytesReader.Read<short>();
+        public ushort ReadUShort() => m_BytesReader.Read<ushort>();
+        public long ReadLong() => m_BytesReader.Read<long>();
+        public ulong ReadULong() => m_BytesReader.Read<ulong>();
+        public float ReadFloat() => m_BytesReader.Read<float>();
+        public double ReadDouble() => m_BytesReader.Read<double>();
+        public string ReadString() => m_BytesReader.Read<string>();
 
         public OperationResult<object?> Read(Type type)
         {
@@ -38,7 +37,7 @@ namespace CorpseLib.Database
                 return new("Read error", string.Format("No serializer found for {0}", type.Name));
             if (type.IsAssignableTo(typeof(DBEntry)))
             {
-                Guid entryID = m_BytesReader.ReadGuid();
+                Guid entryID = m_BytesReader.Read<Guid>();
                 if (entryID == Guid.Empty)
                     return new(null);
                 byte[]? entryBytes = m_DB.GetEntry(entryID)?.Content;
@@ -58,7 +57,7 @@ namespace CorpseLib.Database
         public OperationResult<T?[]> ReadArray<T>()
         {
             List<T?> list = [];
-            int count = m_BytesReader.ReadInt();
+            int count = m_BytesReader.Read<int>();
             for (int i = 0; i < count; ++i)
             {
                 OperationResult<T?> result = Read<T>();
@@ -73,7 +72,7 @@ namespace CorpseLib.Database
         public OperationResult<object?[]> ReadArray(Type type)
         {
             List<object?> list = [];
-            int count = m_BytesReader.ReadInt();
+            int count = m_BytesReader.Read<int>();
             for (int i = 0; i < count; ++i)
             {
                 OperationResult<object?> result = Read(type);

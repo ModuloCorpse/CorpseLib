@@ -1,4 +1,5 @@
 ﻿using CorpseLib.Serialize;
+using System.Text;
 
 namespace CorpseLib.Database
 {
@@ -23,8 +24,8 @@ namespace CorpseLib.Database
         public void Write(ulong value) => m_BytesWriter.Write(value);
         public void Write(float value) => m_BytesWriter.Write(value);
         public void Write(double value) => m_BytesWriter.Write(value);
-        public void Write(string str) => m_BytesWriter.Write(str);
-        public void WriteWithLength(string str) => m_BytesWriter.WriteWithLength(str);
+        public void Write(string str) => m_BytesWriter.Write(Encoding.UTF8.GetBytes(str));
+        public void WriteWithLength(string str) => m_BytesWriter.Write(str);
 
         public void WriteArray<T>(IEnumerable<T> arr)
         {

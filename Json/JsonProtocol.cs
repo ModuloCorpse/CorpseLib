@@ -17,9 +17,9 @@ namespace CorpseLib.Json
         protected sealed override void Write(BytesWriter writer, object packet)
         {
             if (packet is JsonObject obj)
-                writer.Write(obj.ToNetworkString());
+                writer.Write(Encoding.UTF8.GetBytes(obj.ToNetworkString()));
             else if (packet is string str)
-                writer.Write(str);
+                writer.Write(Encoding.UTF8.GetBytes(str));
             else
                 writer.Write(packet);
         }

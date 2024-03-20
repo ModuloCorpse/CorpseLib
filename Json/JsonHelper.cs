@@ -99,7 +99,11 @@ namespace CorpseLib.Json
             if (item is JsonNode node)
                 return node;
             Type itemType = item.GetType();
-            if (itemType.IsPrimitive || itemType.IsEnum || itemType == typeof(decimal) || itemType == typeof(string))
+            if (itemType.IsPrimitive ||
+                itemType.IsEnum ||
+                itemType == typeof(decimal) ||
+                itemType == typeof(string) ||
+                itemType == typeof(Guid))
                 return new JsonValue(item);
             if (item is IDictionary dict && itemType.GetGenericArguments()[0] == typeof(string))
             {

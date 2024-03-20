@@ -28,6 +28,8 @@ namespace CorpseLib.Json
                     .Replace("\b", "\\b")
                     .Replace("\f", "\\f")));
             }
+            else if (m_Value is Guid guid)
+                writer.Append(string.Format("\"{0}\"", guid));
             else if (m_Value is bool b)
                 writer.Append(b ? "true" : "false");
             else if (m_Value is char c)

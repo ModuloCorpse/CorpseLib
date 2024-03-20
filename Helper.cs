@@ -14,6 +14,11 @@
                     return default;
                 type = Nullable.GetUnderlyingType(type)!;
             }
+            if (value is string str)
+            {
+                if (type == typeof(Guid))
+                    return Guid.Parse(str);
+            }
             if (type.IsEnum)
             {
                 int enumValue = (int)Convert.ChangeType(value, typeof(int));

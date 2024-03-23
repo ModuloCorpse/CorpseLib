@@ -17,25 +17,6 @@ namespace CorpseLib.Json
 
         public bool ContainsKey(string key) => m_Children.ContainsKey(key);
 
-        public object? Get(string key, Type type)
-        {
-            if (TryGet(key, type, out object? ret))
-                return ret;
-            throw new JsonException(string.Format("No node {0} in the JSON", key));
-        }
-
-        public T? Get<T>(string key) => (T?)Get(key, typeof(T));
-
-        public object? GetOrDefault(string key, Type type, object? defaultReturn)
-        {
-            if (TryGet(key, type, out object? ret))
-                return ret;
-            return defaultReturn;
-        }
-
-        public T? GetOrDefault<T>(string key) => (T?)GetOrDefault(key, typeof(T), default(T));
-        public T GetOrDefault<T>(string key, T defaultReturn) => (T)GetOrDefault(key, typeof(T), defaultReturn)!;
-
         public bool TryGet(string key, Type type, out object? ret)
         {
             JsonNode? token = m_Children.GetValueOrDefault(key);
@@ -56,22 +37,45 @@ namespace CorpseLib.Json
             return false;
         }
 
-        public List<object> GetList(string key, Type type)
+        public object? Get(string key, Type type)
         {
-            List<object> ret = [];
-            JsonNode? token = m_Children.GetValueOrDefault(key);
-            if (token != null && token is JsonArray arr)
-            {
-                foreach (JsonNode item in arr)
-                {
-                    if (JsonHelper.Cast(item, out object? cast, type))
-                        ret.Add(cast!);
-                }
-            }
-            return ret;
+            if (TryGet(key, type, out object? ret))
+                return ret;
+            throw new JsonException(string.Format("No node {0} in the JSON", key));
         }
 
-        public List<T> GetList<T>(string key) => GetList(key, typeof(T)).Cast<T>().ToList();
+        public T? Get<T>(string key) => (T?)Get(key, typeof(T));
+
+        public object? GetOrDefault(string key, Type type, object? defaultReturn)
+        {
+            if (TryGet(key, type, out object? ret))
+                return ret;
+            return defaultReturn;
+        }
+
+        public T? GetOrDefault<T>(string key) => (T?)GetOrDefault(key, typeof(T), default(T));
+        public T GetOrDefault<T>(string key, T defaultReturn) => (T)GetOrDefault(key, typeof(T), defaultReturn)!;
+
+        public Dictionary<string, T> GetDictionary<T>(string key)
+        {
+            if (TryGet(key, typeof(Dictionary<string, T>), out object? ret))
+                return (Dictionary<string, T>)ret!;
+            return [];
+        }
+
+        public List<T> GetList<T>(string key)
+        {
+            if (TryGet(key, typeof(List<T>), out object? ret))
+                return (List<T>)ret!;
+            return [];
+        }
+
+        public T[] GetArray<T>(string key)
+        {
+            if (TryGet(key, typeof(T[]), out object? ret))
+                return (T[])ret!;
+            return [];
+        }
 
         [Obsolete("Please use Add instead of Set")]
         public void Set(string key, object? obj) => m_Children[key] = JsonHelper.Cast(obj);

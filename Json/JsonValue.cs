@@ -30,6 +30,10 @@ namespace CorpseLib.Json
             }
             else if (m_Value is Guid guid)
                 writer.Append(string.Format("\"{0}\"", guid));
+            else if (m_Value is DateTime date)
+                writer.Append(date.Ticks.ToString());
+            else if (m_Value is TimeSpan timeSpan)
+                writer.Append(timeSpan.Ticks.ToString());
             else if (m_Value is bool b)
                 writer.Append(b ? "true" : "false");
             else if (m_Value is char c)

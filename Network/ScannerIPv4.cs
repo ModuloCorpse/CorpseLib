@@ -1,16 +1,19 @@
-﻿using System.Collections.Concurrent;
+﻿using System.Collections;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.NetworkInformation;
 
 namespace CorpseLib.Network
 {
-    public class Scanner
+    public class ScannerIPv4
     {
-        public class Result(URI url, string hostName)
+        public class Result(URI url, string hostName, object? metadata)
         {
             private readonly URI m_URL = url;
+            private readonly object? m_Metadata = metadata;
             private readonly string m_HostName = hostName;
             public URI URL => m_URL;
+            public object? Metadata => m_Metadata;
             public string HostName => m_HostName;
         }
 
@@ -26,25 +29,47 @@ namespace CorpseLib.Network
 
             public void AddIP(string hostName, string host)
             {
-                List<int> ports = [];
-                if (m_IPTest?.Invoke(host, ref ports) ?? true)
+                IPTestResult result = [];
+                if (m_IPTest?.Invoke(host, result) ?? true)
                 {
-                    if (ports.Count == 0)
-                        m_IPS.Add(new(URI.Build(string.Empty).Host(host).Build(), hostName));
-                    foreach (int port in ports)
-                        m_IPS.Add(new(URI.Build(string.Empty).Host(host).Port(port).Build(), hostName));
+                    if (result.Count == 0)
+                        m_IPS.Add(new(URI.Build(string.Empty).Host(host).Build(), hostName, null));
+                    foreach (IPTestResult.IPData port in result)
+                        m_IPS.Add(new(URI.Build(string.Empty).Host(host).Port(port.Port).Build(), hostName, port.Data));
                 }
             }
 
             public ConcurrentBag<Result> GetResult() => m_IPS;
         }
 
-        public delegate bool IPTest(string ip, ref List<int> port);
+        public class IPTestResult : IEnumerable<IPTestResult.IPData>
+        {
+            public class IPData(int port, object? data)
+            {
+                private readonly object? m_Data = data;
+                private readonly int m_Port = port;
+                public object? Data => m_Data;
+                public int Port => m_Port;
 
-        public static readonly Scanner LOCAL_A = new("10.[].[].[]");
-        public static readonly Scanner LOCAL_B = new("172.[16-31].[].[]");
-        public static readonly Scanner LOCAL_C = new("192.168.[].[]");
-        public static readonly Scanner LOCAL_NETWORK = new("192.168.1.[]");
+            }
+
+            private readonly List<IPData> m_Datas = [];
+
+            public int Count => m_Datas.Count;
+
+            public void ValidatePort(int port) => m_Datas.Add(new(port, null));
+            public void ValidatePort(int port, object? data) => m_Datas.Add(new(port, data));
+
+            public IEnumerator<IPData> GetEnumerator() => ((IEnumerable<IPData>)m_Datas).GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)m_Datas).GetEnumerator();
+        }
+
+        public delegate bool IPTest(string ip, IPTestResult result);
+
+        public static readonly ScannerIPv4 LOCAL_A = new("10.[].[].[]");
+        public static readonly ScannerIPv4 LOCAL_B = new("172.[16-31].[].[]");
+        public static readonly ScannerIPv4 LOCAL_C = new("192.168.[].[]");
+        public static readonly ScannerIPv4 LOCAL_NETWORK = new("192.168.1.[]");
 
         private readonly List<byte> m_FirstRange;
         private readonly List<byte> m_SecondRange;
@@ -62,16 +87,25 @@ namespace CorpseLib.Network
                         ret.Add(i);
                     ret.Add(255);
                 }
-                else if (range.Contains('-'))
+                else
                 {
-                    string[] dynamicRange = range[1..^1].Split('-');
-                    if (dynamicRange.Length != 2)
-                        throw new ArgumentException(string.Format("{0} is not a valid range", range));
-                    byte min = byte.Parse(dynamicRange[0]);
-                    byte max = byte.Parse(dynamicRange[1]);
-                    for (byte i = min; i < max; ++i)
-                        ret.Add(i);
-                    ret.Add(max);
+                    string[] ranges = range[1..^1].Split('/');
+                    foreach (string ipRange in ranges)
+                    {
+                        if (ipRange.Contains('-'))
+                        {
+                            string[] dynamicRange = ipRange[1..^1].Split('-');
+                            if (dynamicRange.Length != 2)
+                                throw new ArgumentException(string.Format("{0} is not a valid range", range));
+                            byte min = byte.Parse(dynamicRange[0]);
+                            byte max = byte.Parse(dynamicRange[1]);
+                            for (byte i = min; i < max; ++i)
+                                ret.Add(i);
+                            ret.Add(max);
+                        }
+                        else if (byte.TryParse(ipRange, out byte value))
+                            ret.Add(value);
+                    }
                 }
             }
             else
@@ -79,7 +113,7 @@ namespace CorpseLib.Network
             return ret;
         }
 
-        public Scanner(string scanRange)
+        public ScannerIPv4(string scanRange)
         {
             string[] ranges = scanRange.Split('.');
             if (ranges.Length != 4)

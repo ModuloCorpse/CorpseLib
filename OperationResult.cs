@@ -27,9 +27,9 @@
 
         public override string ToString()
         {
-            if (string.IsNullOrEmpty(m_Error))
+            if (!string.IsNullOrEmpty(m_Error))
             {
-                if (string.IsNullOrEmpty(m_Description))
+                if (!string.IsNullOrEmpty(m_Description))
                     return string.Format("{0}: {1}", m_Error, m_Description);
                 return m_Error;
             }

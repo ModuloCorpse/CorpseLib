@@ -60,7 +60,7 @@ namespace CorpseLib.Database
                 }
             }
             else if (obj != null)
-                m_EntrySerializer.GetSerializerFor(type)?.SerializeObj(obj, this);
+                m_EntrySerializer.Serialize(obj, this);
         }
 
         public void Write<T>(T obj) => Write(typeof(T), obj);

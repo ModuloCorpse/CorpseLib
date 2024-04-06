@@ -13,12 +13,13 @@ namespace CorpseLib.Serialize
         public abstract void Write(byte[] bytes);
 
         //Serializers
-        public void Write<T>(T obj) => m_Serializer.GetSerializerFor(typeof(T))?.SerializeObj(obj!, this);
-        public void Write(object obj) => m_Serializer.GetSerializerFor(obj.GetType())?.SerializeObj(obj, this);
+        public void Write<T>(T obj) => m_Serializer.Serialize(obj!, this);
+        public void Write(object obj) => m_Serializer.Serialize(obj, this);
         public void WriteList<T>(IEnumerable<T> obj)
         {
             Write(obj.Count());
-            ABytesSerializer? serializer = m_Serializer.GetSerializerFor(typeof(T));
+            //We get the serializer to avoid retrieving it for every item in list
+            ABytesSerializer? serializer = (ABytesSerializer?)m_Serializer.GetSerializerFor(typeof(T));
             if (serializer == null)
                 return;
             foreach (T elem in obj)
@@ -30,7 +31,8 @@ namespace CorpseLib.Serialize
             foreach (object elem in obj)
                 count++;
             Write(count);
-            ABytesSerializer? serializer = m_Serializer.GetSerializerFor(type);
+            //We get the serializer to avoid retrieving it for every item in list
+            ABytesSerializer? serializer = (ABytesSerializer?)m_Serializer.GetSerializerFor(type);
             if (serializer == null)
                 return;
             foreach (object elem in obj)

@@ -20,20 +20,21 @@
             OperationResult<List<string>> splitResult = Helper.SplitCommand(command);
             if (!splitResult)
                 return new(splitResult.Error, splitResult.Description);
-            string[] args = [..splitResult.Result!];
+            string[] args = [.. splitResult.Result!];
             if (args.Length == 0)
                 return new("Command ill-formed", "Command is empty");
             string commandName = args[0];
-            if (m_Prefix == '\0' || commandName[0] == m_Prefix)
+            if (m_Prefix != '\0')
             {
-                commandName = commandName[1..];
-                if (m_Commands.TryGetValue(commandName, out Command? cmd))
-                    return cmd.Call(args[1..]);
+                if (commandName[0] == m_Prefix)
+                    commandName = commandName[1..];
                 else
-                    return new("Unknown command", string.Format("Unknown command {0}", commandName));
+                    return new("Command ill-formed", string.Format("Command '{0}' doesn't start with {1}", commandName, m_Prefix));
             }
+            if (m_Commands.TryGetValue(commandName, out Command? cmd))
+                return cmd.Call(args[1..]);
             else
-                return new("Command ill-formed", string.Format("Command '{0}' doesn't start with {1}", commandName, m_Prefix));
+                return new("Unknown command", string.Format("Unknown command {0}", commandName));
         }
     }
 }

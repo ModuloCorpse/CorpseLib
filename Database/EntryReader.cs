@@ -32,9 +32,6 @@ namespace CorpseLib.Database
 
         public OperationResult<object?> Read(Type type)
         {
-            AEntrySerializer? serializer = m_EntrySerializer.GetSerializerFor(type);
-            if (serializer == null)
-                return new("Read error", string.Format("No serializer found for {0}", type.Name));
             if (type.IsAssignableTo(typeof(DBEntry)))
             {
                 Guid entryID = m_BytesReader.Read<Guid>();
@@ -44,12 +41,12 @@ namespace CorpseLib.Database
                 if (entryBytes == null)
                     return new("Bad link", string.Format("Link {0} does not exist in DB", entryID));
                 EntryReader newReader = new(m_BytesReader.Serializer, m_EntrySerializer, m_DB, entryBytes);
-                OperationResult<object?> result = serializer.DeserializeObj(newReader);
+                OperationResult<object?> result = m_EntrySerializer.Deserialize(newReader, type);
                 if (result && result.Result is DBEntry entry)
                     entry.SetID(entryID);
                 return result;
             }
-            return serializer.DeserializeObj(this);
+            return m_EntrySerializer.Deserialize(this, type);
         }
 
         public OperationResult<T?> Read<T>() => Read(typeof(T)).Cast<T?>();

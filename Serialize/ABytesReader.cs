@@ -16,19 +16,14 @@ namespace CorpseLib.Serialize
 
 
         public T Read<T>() => SafeRead<T>().Result!;
-        public OperationResult<T> SafeRead<T>()
-        {
-            ABytesSerializer? serializer = m_Serializer.GetSerializerFor(typeof(T));
-            if (serializer == null)
-                return new("Read error", string.Format("No serializer found for {0}", typeof(T).Name));
-            return serializer.DeserializeObj(this).Cast<T>();
-        }
+        public OperationResult<T> SafeRead<T>() => m_Serializer.Deserialize<T>(this);
 
         public OperationResult<List<T>> ReadList<T>()
         {
             List<T> ret = [];
             int count = Read<int>();
-            ABytesSerializer? serializer = m_Serializer.GetSerializerFor(typeof(T));
+            //We get the serializer to avoid retrieving it for every item in list
+            ABytesSerializer? serializer = (ABytesSerializer?)m_Serializer.GetSerializerFor(typeof(T));
             if (serializer == null)
                 return new("Read error", string.Format("No serializer found for {0}", typeof(T).Name));
             for (int i = 0; i != count; i++)

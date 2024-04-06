@@ -57,7 +57,7 @@ namespace CorpseLib.Database
         public void Insert(DBEntry entry)
         {
             EntryWriter newWriter = new(m_BytesSerializer, m_EntrySerializer, this);
-            m_EntrySerializer.GetSerializerFor(entry.GetType())?.SerializeObj(entry, newWriter);
+            m_EntrySerializer.Serialize(entry, newWriter);
             byte[] entryBytes = newWriter.Bytes;
             if (m_Entries.TryGetValue(entry.ID, out Entry? storedEntry))
             {
@@ -77,10 +77,7 @@ namespace CorpseLib.Database
             if (m_Entries.TryGetValue(id, out Entry? storedEntry))
             {
                 EntryReader reader = new(m_BytesSerializer, m_EntrySerializer, this, storedEntry.Content);
-                AEntrySerializer? serializer = m_EntrySerializer.GetSerializerFor(typeof(T));
-                if (serializer == null)
-                    return new("Read error", string.Format("No serializer found for {0}", typeof(T).Name));
-                return serializer.DeserializeObj(reader).Cast<T>();
+                return m_EntrySerializer.Deserialize<T>(reader);
             }
             return new("No such entry", string.Format("No entry {0} in the database", id));
         }

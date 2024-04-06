@@ -1,13 +1,13 @@
 ﻿namespace CorpseLib.Serialize
 {
-    public class Serializer<TSerializer> where TSerializer : ASerializer
+    public class Serializer<TReader, TWriter>
     {
         private class SerializerTreeNode
         {
-            private readonly TSerializer? m_Serializer;
+            private readonly ASerializer<TReader, TWriter>? m_Serializer;
             private readonly Dictionary<Type, SerializerTreeNode> m_Children = [];
 
-            public SerializerTreeNode(TSerializer serializer) => m_Serializer = serializer;
+            public SerializerTreeNode(ASerializer<TReader, TWriter> serializer) => m_Serializer = serializer;
             public SerializerTreeNode() => m_Serializer = default;
 
             public void Clear() => m_Children.Clear();
@@ -48,7 +48,7 @@
                 return ret;
             }
 
-            public void Search(Type type, uint depth, ref List<Tuple<uint, TSerializer>> list)
+            public void Search(Type type, uint depth, ref List<Tuple<uint, ASerializer<TReader, TWriter>>> list)
             {
                 bool found = false;
                 foreach (var child in m_Children)
@@ -63,7 +63,7 @@
                     list.Add(new(depth, m_Serializer));
             }
 
-            public TSerializer? Search(string assemblyQualifiedName)
+            public ASerializer<TReader, TWriter>? Search(string assemblyQualifiedName)
             {
                 foreach (var child in m_Children)
                 {
@@ -72,7 +72,7 @@
                 }
                 foreach (var child in m_Children)
                 {
-                    TSerializer? serializer = child.Value.Search(assemblyQualifiedName);
+                    ASerializer<TReader, TWriter>? serializer = child.Value.Search(assemblyQualifiedName);
                     if (serializer != null)
                         return serializer;
                 }
@@ -91,7 +91,7 @@
                 m_Interfaces.Clear();
             }
 
-            public void Insert(TSerializer serializer)
+            public void Insert(ASerializer<TReader, TWriter> serializer)
             {
                 SerializerTreeNode node = new(serializer);
                 Type serializerType = node.GetSerializerType();
@@ -101,16 +101,16 @@
                     m_Classes.Insert(node);
             }
 
-            public TSerializer? Search(Type type)
+            public ASerializer<TReader, TWriter>? Search(Type type)
             {
-                List<Tuple<uint, TSerializer>> classList = [];
+                List<Tuple<uint, ASerializer<TReader, TWriter>>> classList = [];
                 m_Classes.Search(type, 0, ref classList);
                 if (classList.Count != 0)
                     return classList[0].Item2;
-                List<Tuple<uint, TSerializer>> interfaceList = [];
+                List<Tuple<uint, ASerializer<TReader, TWriter>>> interfaceList = [];
                 m_Interfaces.Search(type, 0, ref interfaceList);
                 uint depth = 0;
-                TSerializer? found = null;
+                ASerializer<TReader, TWriter>? found = null;
                 foreach (var elem in interfaceList)
                 {
                     if (elem.Item1 >= depth)
@@ -122,23 +122,65 @@
                 return found;
             }
 
-            public TSerializer? Search(string assemblyQualifiedName)
+            public ASerializer<TReader, TWriter>? Search(string assemblyQualifiedName)
             {
-                TSerializer? classSerializer = m_Classes.Search(assemblyQualifiedName);
+                ASerializer<TReader, TWriter>? classSerializer = m_Classes.Search(assemblyQualifiedName);
                 if (classSerializer != null)
                     return classSerializer;
-                TSerializer? interfaceSerializer = m_Interfaces.Search(assemblyQualifiedName);
+                ASerializer<TReader, TWriter>? interfaceSerializer = m_Interfaces.Search(assemblyQualifiedName);
                 if (interfaceSerializer != null)
                     return interfaceSerializer;
                 return null;
             }
         }
 
+        private static readonly SerializerTreeRoot ms_Serializers = new();
         private readonly SerializerTreeRoot m_Serializers = new();
 
+        public static void RegisterDefault(ASerializer<TReader, TWriter> serializer) => ms_Serializers.Insert(serializer);
+
         public void Clear() => m_Serializers.Clear();
-        public void Register(TSerializer serializer) => m_Serializers.Insert(serializer);
-        public TSerializer? GetSerializerFor(string assemblyQualifiedName) => m_Serializers.Search(assemblyQualifiedName);
-        public TSerializer? GetSerializerFor(Type type) => m_Serializers.Search(type);
+        public void Register(ASerializer<TReader, TWriter> serializer) => m_Serializers.Insert(serializer);
+
+        public ASerializer<TReader, TWriter>? GetSerializerFor(Type type)
+        {
+            ASerializer<TReader, TWriter>? ret = ms_Serializers.Search(type);
+            if (ret != null)
+                return ret;
+            return m_Serializers.Search(type);
+        }
+
+        public OperationResult<T> Deserialize<T>(TReader reader) => Deserialize(reader, typeof(T)).Cast<T>();
+        public OperationResult<object?> Deserialize(TReader reader, Type type)
+        {
+            ASerializer<TReader, TWriter>? serializer = GetSerializerFor(type);
+            if (serializer != null)
+                return serializer.DeserializeObj(reader);
+            return new("Serialization error", string.Format("No serializer found for type {0}", type.Name));
+        }
+
+        public bool Serialize(object obj, TWriter writer)
+        {
+            ASerializer<TReader, TWriter>? serializer = GetSerializerFor(obj.GetType());
+            if (serializer != null)
+            {
+                serializer.SerializeObj(obj, writer);
+                return true;
+            }
+            return false;
+        }
+    }
+    
+    public abstract class ASerializer
+    {
+        internal abstract string GetSerializerName();
+        internal abstract Type GetSerializedType();
+        public override string ToString() => string.Format("{0}[{1}]", GetSerializerName(), GetSerializedType().Name);
+    }
+
+    public abstract class ASerializer<TReader, TWriter> : ASerializer
+    {
+        internal abstract OperationResult<object?> DeserializeObj(TReader reader);
+        internal abstract void SerializeObj(object obj, TWriter writer);
     }
 }

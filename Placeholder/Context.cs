@@ -49,7 +49,7 @@ namespace CorpseLib.Placeholder
                             {
                                 MethodInfo? getMethodInfo = propertyInfo.GetMethod;
                                 if (getMethodInfo != null && getMethodInfo.GetParameters().Length == 1 && getMethodInfo.GetParameters()[0].ParameterType == typeof(string))
-                                    obj = propertyInfo.GetValue(obj, new object[] { variableField });
+                                    obj = propertyInfo.GetValue(obj, [variableField]);
                                 else
                                     return null;
                             }

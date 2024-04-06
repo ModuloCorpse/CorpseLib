@@ -2,11 +2,11 @@
 
 namespace CorpseLib.Database
 {
-    public class EntrySerializer : Serializer<AEntrySerializer> { }
+    public class EntrySerializer : Serializer<EntryReader, EntryWriter> { }
 
     public abstract class AEntrySerializer : ASerializer<EntryReader, EntryWriter>
     {
-        public override string ToString() => "EntrySerializer[" + GetSerializedType().Name + "]";
+        internal override string GetSerializerName() => "EntrySerializer";
     }
 
     public abstract class AEntrySerializer<T> : AEntrySerializer

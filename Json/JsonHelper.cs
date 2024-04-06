@@ -13,11 +13,12 @@ namespace CorpseLib.Json
         };
 
         private static readonly Dictionary<Type, AJsonSerializer> ms_RegisteredSerializers = [];
+        private static readonly JsonNativeSerializer ms_NativeSerializer = new();
 
         public static void RegisterSerializer<T>(AJsonSerializer<T> serializer) => ms_RegisteredSerializers[typeof(T)] = serializer;
         public static void UnregisterSerializer<T>() => ms_RegisteredSerializers.Remove(typeof(T));
 
-        public static JsonSerializer NewSerializer()
+        private static JsonSerializer NewSerializer()
         {
             JsonSerializer serializer = new();
             foreach (AJsonSerializer registeredSerializer in ms_RegisteredSerializers.Values)
@@ -61,60 +62,15 @@ namespace CorpseLib.Json
                 ret = token;
                 return true;
             }
+            else if (type == typeof(object))
+            {
+                ret = token.Value;
+                return true;
+            }
 
             try
             {
-                object obj = token.Value;
-                if (type == typeof(URI) && obj is string uriStr)
-                {
-                    ret = URI.Parse(uriStr);
-                    return true;
-                }
-                if (type == typeof(Guid))
-                {
-                    if (obj is string guidStr)
-                    {
-                        ret = Guid.Parse(guidStr);
-                        return true;
-                    }
-                    else
-                    {
-                        ret = null;
-                        return false;
-                    }
-                }
-                else if (type == typeof(TimeSpan))
-                {
-                    if (long.TryParse(obj.ToString(), out long ticks))
-                    {
-                        ret = new TimeSpan(ticks);
-                        return true;
-                    }
-                    else
-                    {
-                        ret = null;
-                        return false;
-                    }
-                }
-                else if (type == typeof(DateTime))
-                {
-                    if (obj is string dateStr)
-                    {
-                        ret = DateTime.Parse(dateStr);
-                        return true;
-                    }
-                    else if (long.TryParse(obj.ToString(), out long ticks))
-                    {
-                        ret = new DateTime(ticks);
-                        return true;
-                    }
-                    else
-                    {
-                        ret = null;
-                        return false;
-                    }
-                }
-                ret = Helper.Cast(obj, type);
+                ret = ms_NativeSerializer.Deserialize(token, type);
                 return true;
             }
             catch
@@ -194,17 +150,11 @@ namespace CorpseLib.Json
             else if (token is JsonObject jobj)
             {
                 JsonSerializer jSerializer = NewSerializer();
-                AJsonSerializer? serializer = jSerializer.GetSerializerFor(type);
-                if (serializer != null)
+                OperationResult<object?> result = jSerializer.Deserialize(jobj, type);
+                if (result)
                 {
-                    OperationResult<object?> result = serializer.DeserializeObj(jobj);
-                    if (result)
-                    {
-                        ret = result.Result;
-                        return true;
-                    }
-                    ret = null;
-                    return false;
+                    ret = result.Result;
+                    return true;
                 }
             }
             else if (token is JsonValue value)
@@ -236,14 +186,12 @@ namespace CorpseLib.Json
             if (item is JsonNode node)
                 return node;
             Type itemType = item.GetType();
-            if (itemType.IsPrimitive ||
-                itemType.IsEnum ||
-                itemType == typeof(decimal) ||
-                itemType == typeof(string) ||
-                itemType == typeof(Guid) ||
-                itemType == typeof(DateTime) ||
-                itemType == typeof(TimeSpan))
-                return new JsonValue(item);
+            if (ms_NativeSerializer.IsNative(itemType))
+            {
+                JsonValue? value = ms_NativeSerializer.Serialize(item);
+                if (value != null)
+                    return value;
+            }
             if (item is IDictionary dict && itemType.GetGenericArguments()[0] == typeof(string))
             {
                 JsonObject obj = [];
@@ -261,13 +209,9 @@ namespace CorpseLib.Json
             else if (item is URI uri)
                 return new JsonValue(uri.ToString());
             JsonSerializer jSerializer = NewSerializer();
-            AJsonSerializer? serializer = jSerializer.GetSerializerFor(itemType);
-            if (serializer != null)
-            {
-                JsonObject ret = [];
-                serializer.SerializeObj(item, ret);
+            JsonObject ret = [];
+            if (jSerializer.Serialize(item, ret))
                 return ret;
-            }
             throw new JsonException(string.Format("Cannot cast item : No know conversion from '{0}' to json node", itemType.Name));
         }
 

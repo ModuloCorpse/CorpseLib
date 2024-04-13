@@ -2,13 +2,11 @@
 
 namespace CorpseLib.ManagedObject
 {
-    public abstract class Manager<T> where T : Object<T>
+    public abstract class Manager<T>(string directoryPath) where T : Object<T>
     {
-        private readonly string m_DirPath;
+        private readonly string m_DirPath = directoryPath;
         private readonly Dictionary<string, T> m_Objects = [];
         private T? m_CurrentObject = null;
-
-        protected Manager(string directoryPath) => m_DirPath = directoryPath;
 
         public T? GetObject(string id)
         {

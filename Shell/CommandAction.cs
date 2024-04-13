@@ -63,8 +63,10 @@ namespace CorpseLib.Shell
                     return new("Bad arguments", string.Format("Invalid argument at pos {0}", i));
             }
 
-            object? ret = m_Action.Call(actionArgs);
-            return new(ret?.ToString());
+            object?[] ret = m_Action.Call(actionArgs);
+            if (ret.Length == 0 || ret[0] == null)
+                return new(string.Empty);
+            return new(ret[0]!.ToString());
         }
     }
 }

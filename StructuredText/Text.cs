@@ -4,7 +4,7 @@ using System.Text;
 
 namespace CorpseLib.StructuredText
 {
-    public class Text : IEnumerable<Section>
+    public class Text : IEnumerable<Section>, ICloneable
     {
         public class JSerializer : AJsonSerializer<Text>
         {
@@ -21,27 +21,29 @@ namespace CorpseLib.StructuredText
 
         public bool IsEmpty => m_Sections.Count == 0;
 
-        public void AddText(string text) { if (!string.IsNullOrEmpty(text)) m_Sections.Add(new(text, Section.Type.TEXT)); }
-        public void AddText(string text, Dictionary<string, object> properties) { if (!string.IsNullOrEmpty(text)) m_Sections.Add(new(text, Section.Type.TEXT, properties)); }
-        public void AddImage(string url) => m_Sections.Add(new(url, Section.Type.IMAGE));
-        public void AddImage(string url, string alt) => m_Sections.Add(new(url, alt, Section.Type.IMAGE));
-        public void AddImage(string url, Dictionary<string, object> properties) => m_Sections.Add(new(url, Section.Type.IMAGE, properties));
-        public void AddImage(string url, string alt, Dictionary<string, object> properties) => m_Sections.Add(new(url, alt, Section.Type.IMAGE, properties));
-        public void AddAnimatedImage(string url) => m_Sections.Add(new(url, Section.Type.ANIMATED_IMAGE));
-        public void AddAnimatedImage(string url, string alt) => m_Sections.Add(new(url, alt, Section.Type.ANIMATED_IMAGE));
-        public void AddAnimatedImage(string url, Dictionary<string, object> properties) => m_Sections.Add(new(url, Section.Type.ANIMATED_IMAGE, properties));
-        public void AddAnimatedImage(string url, string alt, Dictionary<string, object> properties) => m_Sections.Add(new(url, alt, Section.Type.ANIMATED_IMAGE, properties));
+        public void Add(Section section) => m_Sections.Add(section);
+        public void AddText(string text) { if (!string.IsNullOrEmpty(text)) m_Sections.Add(new TextSection(text)); }
+        public void AddText(string text, Dictionary<string, object> properties) { if (!string.IsNullOrEmpty(text)) m_Sections.Add(new TextSection(text, properties)); }
+        public void AddImage(string url) => m_Sections.Add(new ImageSection(url));
+        public void AddImage(string url, string alt) => m_Sections.Add(new ImageSection(url, alt));
+        public void AddImage(string url, Dictionary<string, object> properties) => m_Sections.Add(new ImageSection(url, properties));
+        public void AddImage(string url, string alt, Dictionary<string, object> properties) => m_Sections.Add(new ImageSection(url, alt, properties));
+        public void AddAnimatedImage(string url) => m_Sections.Add(new AnimatedImageSection(url));
+        public void AddAnimatedImage(string url, string alt) => m_Sections.Add(new AnimatedImageSection(url, alt));
+        public void AddAnimatedImage(string url, Dictionary<string, object> properties) => m_Sections.Add(new AnimatedImageSection(url, properties));
+        public void AddAnimatedImage(string url, string alt, Dictionary<string, object> properties) => m_Sections.Add(new AnimatedImageSection(url, alt, properties));
 
-        public void AddTextFirst(string text) => m_Sections.Insert(0, new(text, Section.Type.TEXT));
-        public void AddTextFirst(string text, Dictionary<string, object> properties) => m_Sections.Insert(0, new(text, Section.Type.TEXT, properties));
-        public void AddImageFirst(string url) => m_Sections.Insert(0, new(url, Section.Type.IMAGE));
-        public void AddImageFirst(string url, string alt) => m_Sections.Insert(0, new(url, alt, Section.Type.IMAGE));
-        public void AddImageFirst(string url, Dictionary<string, object> properties) => m_Sections.Insert(0, new(url, Section.Type.IMAGE, properties));
-        public void AddImageFirst(string url, string alt, Dictionary<string, object> properties) => m_Sections.Insert(0, new(url, alt, Section.Type.IMAGE, properties));
-        public void AddAnimatedImageFirst(string url) => m_Sections.Insert(0, new(url, Section.Type.ANIMATED_IMAGE));
-        public void AddAnimatedImageFirst(string url, string alt) => m_Sections.Insert(0, new(url, alt, Section.Type.ANIMATED_IMAGE));
-        public void AddAnimatedImageFirst(string url, Dictionary<string, object> properties) => m_Sections.Insert(0, new(url, Section.Type.ANIMATED_IMAGE, properties));
-        public void AddAnimatedImageFirst(string url, string alt, Dictionary<string, object> properties) => m_Sections.Insert(0, new(url, alt, Section.Type.ANIMATED_IMAGE, properties));
+        public void AddFirst(Section section) => m_Sections.Insert(0, section);
+        public void AddTextFirst(string text) => m_Sections.Insert(0, new TextSection(text));
+        public void AddTextFirst(string text, Dictionary<string, object> properties) => m_Sections.Insert(0, new TextSection(text, properties));
+        public void AddImageFirst(string url) => m_Sections.Insert(0, new ImageSection(url));
+        public void AddImageFirst(string url, string alt) => m_Sections.Insert(0, new ImageSection(url, alt));
+        public void AddImageFirst(string url, Dictionary<string, object> properties) => m_Sections.Insert(0, new ImageSection(url, properties));
+        public void AddImageFirst(string url, string alt, Dictionary<string, object> properties) => m_Sections.Insert(0, new ImageSection(url, alt, properties));
+        public void AddAnimatedImageFirst(string url) => m_Sections.Insert(0, new AnimatedImageSection(url));
+        public void AddAnimatedImageFirst(string url, string alt) => m_Sections.Insert(0, new AnimatedImageSection(url, alt));
+        public void AddAnimatedImageFirst(string url, Dictionary<string, object> properties) => m_Sections.Insert(0, new AnimatedImageSection(url, properties));
+        public void AddAnimatedImageFirst(string url, string alt, Dictionary<string, object> properties) => m_Sections.Insert(0, new AnimatedImageSection(url, alt, properties));
 
         public void Append(Text text) => m_Sections.AddRange(text.m_Sections);
 
@@ -51,7 +53,7 @@ namespace CorpseLib.StructuredText
 
         public static Text Concatenate(Text a, Text b)
         {
-            Text ret = new();
+            Text ret = [];
             ret.Append(a);
             ret.Append(b);
             return ret;
@@ -66,6 +68,14 @@ namespace CorpseLib.StructuredText
                     builder.Append(section.Content);
             }
             return builder.ToString();
+        }
+
+        public object Clone()
+        {
+            Text clone = [];
+            foreach (Section section in m_Sections)
+                clone.m_Sections.Add((Section)section.Clone());
+            return clone;
         }
     }
 }

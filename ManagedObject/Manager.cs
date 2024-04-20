@@ -1,4 +1,5 @@
-﻿using CorpseLib.Json;
+﻿using CorpseLib.DataNotation;
+using CorpseLib.Json;
 
 namespace CorpseLib.ManagedObject
 {
@@ -72,7 +73,7 @@ namespace CorpseLib.ManagedObject
                     string objID = Path.GetFileNameWithoutExtension(file);
                     try
                     {
-                        JsonObject json = JsonParser.LoadFromFile(file);
+                        DataObject json = JsonParser.LoadFromFile(file);
                         if (objID == "settings")
                         {
                             currentID = json.GetOrDefault("current", string.Empty);
@@ -118,7 +119,7 @@ namespace CorpseLib.ManagedObject
             if (!Directory.Exists(m_DirPath))
                 Directory.CreateDirectory(m_DirPath);
 
-            JsonObject json = [];
+            DataObject json = [];
             json.Add("current", m_CurrentObject?.ID ?? string.Empty);
             SaveSettings(ref json);
             JsonParser.WriteToFile(string.Format("{0}/settings.json", m_DirPath), json);
@@ -136,9 +137,9 @@ namespace CorpseLib.ManagedObject
                 child.SetParent(parent);
         }
 
-        protected abstract T? DeserializeObject(JsonObject obj);
+        protected abstract T? DeserializeObject(DataObject obj);
 
-        protected virtual void LoadSettings(JsonObject obj) { }
-        protected virtual void SaveSettings(ref JsonObject obj) { }
+        protected virtual void LoadSettings(DataObject obj) { }
+        protected virtual void SaveSettings(ref DataObject obj) { }
     }
 }

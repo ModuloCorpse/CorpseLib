@@ -1,16 +1,16 @@
 ﻿using CorpseLib.DataNotation;
 using CorpseLib.Serialize;
 
-namespace CorpseLib.Json
+namespace CorpseLib.Cmon
 {
-    public class JsonObjectSerializer : ABytesSerializer<DataObject>
+    public class CmonObjectSerializer : ABytesSerializer<DataObject>
     {
         protected override OperationResult<DataObject> Deserialize(ABytesReader reader)
         {
             try
             {
-                return new(JsonParser.Parse(reader.Read<string>()));
-            } catch (JsonException e)
+                return new(CmonParser.Parse(reader.Read<string>()));
+            } catch (CmonException e)
             {
                 return new("Deserialization error", e.Message);
             }
@@ -18,7 +18,7 @@ namespace CorpseLib.Json
 
         protected override void Serialize(DataObject obj, ABytesWriter writer)
         {
-            string str = JsonParser.NetStr(obj);
+            string str = CmonParser.NetStr(obj);
             writer.Write(str);
         }
     }

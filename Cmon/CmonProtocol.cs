@@ -3,9 +3,9 @@ using CorpseLib.Network;
 using CorpseLib.Serialize;
 using System.Text;
 
-namespace CorpseLib.Json
+namespace CorpseLib.Cmon
 {
-    public abstract class JsonProtocol : AProtocol
+    public abstract class CmonProtocol : AProtocol
     {
         private string m_Buffer = string.Empty;
 
@@ -18,7 +18,7 @@ namespace CorpseLib.Json
         protected sealed override void Write(BytesWriter writer, object packet)
         {
             if (packet is DataObject obj)
-                writer.Write(Encoding.UTF8.GetBytes(JsonParser.NetStr(obj)));
+                writer.Write(Encoding.UTF8.GetBytes(CmonParser.NetStr(obj)));
             else if (packet is string str)
                 writer.Write(Encoding.UTF8.GetBytes(str));
             else
@@ -33,7 +33,7 @@ namespace CorpseLib.Json
             while (i < m_Buffer.Length && char.IsWhiteSpace(m_Buffer[i]))
                 i++;
             if (i == m_Buffer.Length || m_Buffer[i] != '{')
-                return new("Invalid JSON", "Received JSON doesn't start with a {");
+                return new("Invalid CMON", "Received CMON doesn't start with a {");
             bool inString = false;
             i++;
             int scope = 1;
@@ -64,12 +64,12 @@ namespace CorpseLib.Json
             int readLength = Encoding.UTF8.GetByteCount(jsonString) - originalBufferLength;
             try
             {
-                DataObject node = JsonParser.Parse(jsonString);
+                DataObject node = CmonParser.Parse(jsonString);
                 _ = reader.ReadBytes(readLength);
                 m_Buffer = string.Empty;
                 return new(node);
             }
-            catch (JsonException e)
+            catch (CmonException e)
             {
                 return new("Deserialization error", e.Message);
             }

@@ -1,10 +1,57 @@
 ﻿using CorpseLib.DataNotation;
 using System.Text;
 
-namespace CorpseLib.Json
+namespace CorpseLib.Cmon
 {
-    public class JsonReader() : DataReader()
+    public class CmonReader() : DataReader
     {
+        internal static readonly char ARRAY_SEPARATOR = ',';
+
+        private string ReadComment()
+        {
+            StringBuilder stringBuilder = new();
+            while (CanRead)
+            {
+                Next();
+                char c = Current;
+                if (c == '\\')
+                {
+                    Next();
+                    c = Current;
+                    if (c == '*')
+                        stringBuilder.Append('*');
+                    else
+                    {
+                        stringBuilder.Append('\\');
+                        stringBuilder.Append(c);
+                    }
+                }
+                else if (c == '*')
+                {
+                    Next();
+                    return stringBuilder.ToString();
+                }
+                else
+                    stringBuilder.Append(c);
+            }
+            throw new CmonException("Unclosed comment");
+        }
+
+        private string[] ReadComments()
+        {
+            List<string> comments = [];
+            while (true)
+            {
+                char c = Current;
+                if (char.IsWhiteSpace(c))
+                    SkipWhitespace();
+                else if (c == '*')
+                    comments.Add(ReadComment());
+                else
+                    return [.. comments];
+            }
+        }
+
         private string ReadString()
         {
             StringBuilder stringBuilder = new();
@@ -37,13 +84,7 @@ namespace CorpseLib.Json
                 else
                     stringBuilder.Append(c);
             }
-            throw new JsonException("Unclosed string");
-        }
-
-        private DataValue ReadNextValue()
-        {
-            Previous();
-            return ReadValue();
+            throw new CmonException("Unclosed string");
         }
 
         private double ReadNumber(bool canBeNegative)
@@ -57,12 +98,12 @@ namespace CorpseLib.Json
                 if (canBeNegative)
                     isNegative = true;
                 else
-                    throw new JsonException("Missformated number");
+                    throw new CmonException("Missformated number");
             }
             else if (c >= '0' && c <= '9')
                 value = (c - '0');
             else
-                throw new JsonException("Misformatted json : Missformated number");
+                throw new CmonException("Misformatted cmon : Missformated number");
             do
             {
                 c = Current;
@@ -73,12 +114,13 @@ namespace CorpseLib.Json
                 }
             } while (CanRead && c >= '0' && c <= '9');
             if (!CanRead)
-                throw new JsonException("Misformatted json : Json ended with a number");
+                throw new CmonException("Misformatted cmon : Cmon ended with a number");
             return isNegative ? -value : value;
         }
 
         private DataValue ReadValue()
         {
+            SkipWhitespace();
             char c = Current;
             if (c == '"')
             {
@@ -160,91 +202,113 @@ namespace CorpseLib.Json
 
         private void ReadArray(DataArray array)
         {
-            SkipWhitespace();
+            while (CanRead)
+            {
+                string[] comments = ReadComments();
+                if (CanRead)
+                {
+                    char c = Current;
+                    if (c == ']')
+                    {
+                        Next();
+                        return;
+                    }
+                    if (c == ARRAY_SEPARATOR)
+                        Next();
+                    else
+                    {
+                        DataNode node = ReadNext();
+                        node.AddComments(comments);
+                        if (!array.Add(node))
+                            throw new CmonException("Missformated array: Multiple element type within array");
+                    }
+                }
+            }
+            throw new CmonException("Missformated array: Missing ]");
+        }
+
+        private string ReadName()
+        {
+            StringBuilder stringBuilder = new();
             while (CanRead)
             {
                 char c = Current;
-                if (c == ']')
-                {
-                    Next();
-                    return;
-                }
-                else if (c != ',')
-                {
-                    if (!array.Add(ReadNext()))
-                        throw new JsonException("Missformated array: Multiple element type within array");
-                }
-                else
-                    Next();
-                SkipWhitespace();
+                if (!char.IsLetterOrDigit(c) && !char.IsWhiteSpace(c) && c != '_' && c != '-' && c != ':')
+                    return stringBuilder.ToString();
+                else if (!char.IsWhiteSpace(c))
+                    stringBuilder.Append(c);
+                Next();
             }
-            throw new JsonException("Missformated array: Missing ]");
+            throw new CmonException("Unclosed name");
         }
 
-        private DataArray ReadArray()
+        private void ReadObject(DataObject obj, bool needClose)
         {
-            DataArray array = [];
-            ReadArray(array);
-            return array;
-        }
-
-        private void ReadObject(DataObject obj)
-        {
-            SkipWhitespace();
             while (CanRead)
             {
-                char c = Current;
-                if (c == '}')
+                string[] comments = ReadComments();
+                if (CanRead)
                 {
-                    Next();
-                    return;
+                    char c = Current;
+                    if (c == '}')
+                    {
+                        Next();
+                        return;
+                    }
+                    string name = ReadName();
+                    DataNode node = ReadNext();
+                    node.AddComments(comments);
+                    obj.Add(name, node);
                 }
-                else if (c == '"')
-                {
-                    string name = ReadString();
-                    SkipWhitespace();
-                    c = Current;
-                    if (c != ':')
-                        throw new JsonException("Missformated object: Missing \":\" after property name");
-                    Next();
-                    SkipWhitespace();
-                    obj.Add(name, ReadNext());
-                }
-                else
-                    Next();
-                SkipWhitespace();
             }
-            throw new JsonException("Missformated object: Missing }");
-        }
-
-        private DataObject ReadObject()
-        {
-            DataObject obj = [];
-            ReadObject(obj);
-            return obj;
+            if (needClose)
+                throw new CmonException("Missformated object: Missing }");
         }
 
         private DataNode ReadNext()
         {
-            SkipWhitespace();
-            char c = Current;
-            Next();
-            return c switch
+            switch (Current)
             {
-                '{' => ReadObject(),
-                '[' => ReadArray(),
-                _ => ReadNextValue(),
-            };
+                case '{':
+                {
+                    Next();
+                    DataObject newObj = [];
+                    ReadObject(newObj, true);
+                    return newObj;
+                }
+                case '[':
+                {
+                    Next();
+                    DataArray newArray = [];
+                    ReadArray(newArray);
+                    return newArray;
+                }
+                case '=':
+                {
+                    Next();
+                    return ReadValue();
+                }
+                default:
+                    return ReadValue();
+            }
         }
 
         public override DataObject Read()
         {
-            SkipWhitespace();
             if (!CanRead)
-                throw new JsonException("Empty Json");
-            if (Current != '{')
-                throw new JsonException("Json should start with a {");
-            return ReadObject();
+                throw new CmonException("Empty Cmon");
+            SkipWhitespace();
+            string[] comments = ReadComments();
+            bool needClose = false;
+            if (Current == '{')
+            {
+                needClose = true;
+                Next();
+            }
+            DataObject obj = [];
+            obj.AddComments(comments);
+            ReadObject(obj, needClose);
+            return obj;
         }
     }
 }

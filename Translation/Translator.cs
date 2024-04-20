@@ -95,7 +95,7 @@ namespace CorpseLib.Translation
 
         public static void SaveToFile(string path)
         {
-            IniFile file = new();
+            IniFile file = [];
             foreach (Translation translation in ms_Translations.Values)
                 file.Add(translation.ToIniSection());
             File.WriteAllText(path, file.ToString().Trim());

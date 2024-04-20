@@ -5,10 +5,12 @@ namespace CorpseLib
 {
     public static class Helper
     {
-        public static T? Cast<T>(object value) => (T?)Cast(value, typeof(T));
+        public static T? Cast<T>(object? value) => (T?)Cast(value, typeof(T));
 
-        public static object? Cast(object value, Type type)
+        public static object? Cast(object? value, Type type)
         {
+            if (value == null)
+                return null;
             if (value.GetType().IsAssignableTo(type))
                 return value;
             if (type.IsGenericType && type.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))

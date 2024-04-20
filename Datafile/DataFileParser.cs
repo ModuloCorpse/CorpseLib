@@ -1,6 +1,4 @@
-﻿using CorpseLib.Json;
-
-namespace CorpseLib.Datafile
+﻿namespace CorpseLib.Datafile
 {
     public class DataFileParser<TObject, TWriter, TReader>
         where TReader : DataFileReader<TObject, TWriter>, new()

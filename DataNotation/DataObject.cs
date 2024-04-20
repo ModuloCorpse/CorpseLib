@@ -1,13 +1,13 @@
 ﻿using System.Collections;
 
-namespace CorpseLib.Json
+namespace CorpseLib.DataNotation
 {
-    public class JsonObject : JsonNode, IEnumerable<KeyValuePair<string, JsonNode>>
+    public class DataObject : DataNode, IEnumerable<KeyValuePair<string, DataNode>>
     {
-        private readonly Dictionary<string, JsonNode> m_Children = [];
+        private readonly Dictionary<string, DataNode> m_Children = [];
 
-        public JsonObject() { }
-        public JsonObject(JsonObject obj) => m_Children = obj.m_Children;
+        public DataObject() { }
+        public DataObject(DataObject obj) => m_Children = obj.m_Children;
 
         public object? this[string key]
         {
@@ -19,9 +19,9 @@ namespace CorpseLib.Json
 
         public bool TryGet(string key, Type type, out object? ret)
         {
-            JsonNode? token = m_Children.GetValueOrDefault(key);
+            DataNode? token = m_Children.GetValueOrDefault(key);
             if (token != null)
-                return JsonHelper.Cast(token, out ret, type);
+                return DataHelper.Cast(token, out ret, type);
             ret = default;
             return false;
         }
@@ -41,7 +41,7 @@ namespace CorpseLib.Json
         {
             if (TryGet(key, type, out object? ret))
                 return ret;
-            throw new JsonException(string.Format("No node {0} in the JSON", key));
+            throw new DataException(string.Format("No node {0} in the JSON", key));
         }
 
         public T? Get<T>(string key) => (T?)Get(key, typeof(T));
@@ -77,28 +77,11 @@ namespace CorpseLib.Json
             return [];
         }
 
-        [Obsolete("Please use Add instead of Set")]
-        public void Set(string key, object? obj) => m_Children[key] = JsonHelper.Cast(obj);
+        public void Add(string key, object? obj) => m_Children[key] = DataHelper.Cast(obj);
 
-        public void Add(string key, object? obj) => m_Children[key] = JsonHelper.Cast(obj);
+        public DataNode? Get(string name) => m_Children.GetValueOrDefault(name);
 
-        public JsonNode? Get(string name) => m_Children.GetValueOrDefault(name);
-
-        protected override void AppendToWriter(ref JsonWriter writer)
-        {
-            writer.OpenObject();
-            int i = 0;
-            foreach (var child in m_Children)
-            {
-                if (i++ > 0)
-                    writer.AppendSeparator();
-                writer.AppendName(child.Key);
-                AppendObject(ref writer, child.Value);
-            }
-            writer.CloseObject();
-        }
-
-        public IEnumerator<KeyValuePair<string, JsonNode>> GetEnumerator() => ((IEnumerable<KeyValuePair<string, JsonNode>>)m_Children).GetEnumerator();
+        public IEnumerator<KeyValuePair<string, DataNode>> GetEnumerator() => ((IEnumerable<KeyValuePair<string, DataNode>>)m_Children).GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)m_Children).GetEnumerator();
     }

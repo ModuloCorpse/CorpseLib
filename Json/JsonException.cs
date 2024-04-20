@@ -1,6 +1,6 @@
-﻿using CorpseLib.Datafile;
+﻿using CorpseLib.DataNotation;
 
 namespace CorpseLib.Json
 {
-    public class JsonException(string message) : DataFileException(message) { }
+    public class JsonException(string message) : DataException(message) { }
 }

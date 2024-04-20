@@ -1,32 +1,25 @@
 ﻿using CorpseLib.Network;
 using System.Collections;
 
-namespace CorpseLib.Json
+namespace CorpseLib.DataNotation
 {
-    public class JsonHelper
+    public class DataHelper
     {
-        public static readonly JsonFormat NETWORK_FORMAT = new()
-        {
-            InlineScope = true,
-            DoLineBreak = false,
-            DoIndent = false,
-        };
+        private static readonly Dictionary<Type, ADataSerializer> ms_RegisteredSerializers = [];
+        private static readonly DataNativeSerializer ms_NativeSerializer = new();
 
-        private static readonly Dictionary<Type, AJsonSerializer> ms_RegisteredSerializers = [];
-        private static readonly JsonNativeSerializer ms_NativeSerializer = new();
-
-        public static void RegisterSerializer<T>(AJsonSerializer<T> serializer) => ms_RegisteredSerializers[typeof(T)] = serializer;
+        public static void RegisterSerializer<T>(ADataSerializer<T> serializer) => ms_RegisteredSerializers[typeof(T)] = serializer;
         public static void UnregisterSerializer<T>() => ms_RegisteredSerializers.Remove(typeof(T));
 
-        private static JsonSerializer NewSerializer()
+        private static DataSerializer NewSerializer()
         {
-            JsonSerializer serializer = new();
-            foreach (AJsonSerializer registeredSerializer in ms_RegisteredSerializers.Values)
+            DataSerializer serializer = new();
+            foreach (ADataSerializer registeredSerializer in ms_RegisteredSerializers.Values)
                 serializer.Register(registeredSerializer);
             return serializer;
         }
 
-        private static bool CastToDictionary(JsonObject token, out object? ret, Type type)
+        private static bool CastToDictionary(DataObject token, out object? ret, Type type)
         {
             Type valueType = type.GetGenericArguments()[1];
             IDictionary? dict = (IDictionary?)Activator.CreateInstance(type);
@@ -55,9 +48,9 @@ namespace CorpseLib.Json
             return false;
         }
 
-        private static bool CastFromJsonValue(JsonValue token, out object? ret, Type type)
+        private static bool CastFromCmonValue(DataValue token, out object? ret, Type type)
         {
-            if (type == typeof(JsonValue))
+            if (type == typeof(DataValue))
             {
                 ret = token;
                 return true;
@@ -80,19 +73,19 @@ namespace CorpseLib.Json
             }
         }
 
-        private static bool CastToArray(JsonArray token, out object? ret, Type type)
+        private static bool CastToArray(DataArray token, out object? ret, Type type)
         {
             Type arrType = type.GetElementType()!;
             Type genericListType = typeof(List<>).MakeGenericType(arrType);
             IList? list = (IList?)Activator.CreateInstance(genericListType);
             if (list != null)
             {
-                foreach (JsonNode item in token)
+                foreach (DataNode item in token)
                 {
                     if (Cast(item, out object? listRet, arrType))
                         list.Add(listRet);
                 }
-                Array arr = Array.CreateInstance(arrType, list.Count);
+                System.Array arr = System.Array.CreateInstance(arrType, list.Count);
                 int i = 0;
                 foreach (object? item in list)
                     arr.SetValue(item, i++);
@@ -103,13 +96,13 @@ namespace CorpseLib.Json
             return false;
         }
 
-        private static bool CastToList(JsonArray token, out object? ret, Type type)
+        private static bool CastToList(DataArray token, out object? ret, Type type)
         {
             Type listType = type.GetGenericArguments()[0];
             IList? list = (IList?)Activator.CreateInstance(type);
             if (list != null)
             {
-                foreach (JsonNode item in token)
+                foreach (DataNode item in token)
                 {
                     if (Cast(item, out object? listRet, listType))
                         list.Add(listRet);
@@ -121,9 +114,9 @@ namespace CorpseLib.Json
             return false;
         }
 
-        public static bool Cast(JsonNode token, out object? ret, Type type)
+        public static bool Cast(DataNode token, out object? ret, Type type)
         {
-            if (type.IsAssignableTo(typeof(JsonNode)) && token.GetType().IsAssignableTo(type))
+            if (type.IsAssignableTo(typeof(DataNode)) && token.GetType().IsAssignableTo(type))
             {
                 ret = token;
                 return true;
@@ -132,24 +125,19 @@ namespace CorpseLib.Json
             if (type.IsGenericType &&
                 type.GetGenericTypeDefinition() == typeof(Dictionary<,>) &&
                 type.GetGenericArguments()[0] == typeof(string) &&
-                token is JsonObject dictObj)
+                token is DataObject dictObj)
                 return CastToDictionary(dictObj, out ret, type);
             else if (type.IsGenericType &&
                 type.GetGenericTypeDefinition() == typeof(List<>) &&
-                token is JsonArray list)
+                token is DataArray list)
                 return CastToList(list, out ret, type);
             else if (type.IsArray &&
-                token is JsonArray arr)
+                token is DataArray arr)
                 return CastToArray(arr, out ret, type);
 
-            if (token is JsonNull)
+            if (token is DataObject jobj)
             {
-                ret = null;
-                return true;
-            }
-            else if (token is JsonObject jobj)
-            {
-                JsonSerializer jSerializer = NewSerializer();
+                DataSerializer jSerializer = NewSerializer();
                 OperationResult<object?> result = jSerializer.Deserialize(jobj, type);
                 if (result)
                 {
@@ -157,8 +145,8 @@ namespace CorpseLib.Json
                     return true;
                 }
             }
-            else if (token is JsonValue value)
-                return CastFromJsonValue(value, out ret, type);
+            else if (token is DataValue value)
+                return CastFromCmonValue(value, out ret, type);
             else if (token.GetType().IsAssignableTo(type))
             {
                 ret = token;
@@ -168,7 +156,7 @@ namespace CorpseLib.Json
             return false;
         }
 
-        public static bool Cast<T>(JsonNode token, out T? ret)
+        public static bool Cast<T>(DataNode token, out T? ret)
         {
             if (Cast(token, out object? tmp, typeof(T)))
             {
@@ -179,57 +167,57 @@ namespace CorpseLib.Json
             return false;
         }
 
-        public static JsonNode Cast(object? item)
+        public static DataNode Cast(object? item)
         {
             if (item == null)
-                return new JsonNull();
-            if (item is JsonNode node)
+                return new DataValue();
+            if (item is DataNode node)
                 return node;
             Type itemType = item.GetType();
             if (ms_NativeSerializer.IsNative(itemType))
             {
-                JsonValue? value = ms_NativeSerializer.Serialize(item);
+                DataValue? value = ms_NativeSerializer.Serialize(item);
                 if (value != null)
                     return value;
             }
             if (item is IDictionary dict && itemType.GetGenericArguments()[0] == typeof(string))
             {
-                JsonObject obj = [];
+                DataObject obj = [];
                 foreach (DictionaryEntry pair in dict)
                     obj[(string)pair.Key] = pair.Value;
                 return obj;
             }
             else if ((itemType.IsArray || item is IList) && item is IEnumerable enumerable)
             {
-                JsonArray arr = [];
+                DataArray arr = [];
                 foreach (object elem in enumerable)
                     arr.Add(Cast(elem));
                 return arr;
             }
             else if (item is URI uri)
-                return new JsonValue(uri.ToString());
-            JsonSerializer jSerializer = NewSerializer();
-            JsonObject ret = [];
+                return new DataValue(uri.ToString());
+            DataSerializer jSerializer = NewSerializer();
+            DataObject ret = [];
             if (jSerializer.Serialize(item, ret))
                 return ret;
-            throw new JsonException(string.Format("Cannot cast item : No know conversion from '{0}' to json node", itemType.Name));
+            throw new DataException(string.Format("Cannot cast item : No know conversion from '{0}' to json node", itemType.Name));
         }
 
-        public static object? Flatten(JsonNode node)
+        public static object? Flatten(DataNode node)
         {
-            if (node is JsonValue val)
+            if (node is DataValue val)
                 return val.Value;
-            else if (node is JsonObject obj)
+            else if (node is DataObject obj)
             {
                 Dictionary<string, object?> ret = [];
-                foreach (KeyValuePair<string, JsonNode> pair in obj)
+                foreach (KeyValuePair<string, DataNode> pair in obj)
                     ret[pair.Key] = Flatten(pair.Value);
                 return ret;
             }
-            else if (node is JsonArray arr)
+            else if (node is DataArray arr)
             {
                 List<object?> ret = [];
-                foreach (JsonNode elem in arr)
+                foreach (DataNode elem in arr)
                     ret.Add(Flatten(elem));
                 return ret;
             }

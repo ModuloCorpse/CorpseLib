@@ -1,18 +1,18 @@
-﻿using CorpseLib.Json;
+﻿using CorpseLib.DataNotation;
 using System.Diagnostics.CodeAnalysis;
 
 namespace CorpseLib.StructuredText
 {
     public abstract class Section(string content, string alt, Section.Type type) : ICloneable
     {
-        public class SectionJsonSerializer : AJsonSerializer<Section>
+        public class DataSerializer : ADataSerializer<Section>
         {
-            protected override OperationResult<Section> Deserialize(JsonObject reader)
+            protected override OperationResult<Section> Deserialize(DataObject reader)
             {
-                JsonNode? propertiesNode = reader.Get("properties");
-                if (propertiesNode != null && propertiesNode is JsonObject propertiesObj)
+                DataNode? propertiesNode = reader.Get("properties");
+                if (propertiesNode != null && propertiesNode is DataObject propertiesObj)
                 {
-                    Dictionary<string, object> properties = (Dictionary<string, object>)JsonHelper.Flatten(propertiesObj)!;
+                    Dictionary<string, object> properties = (Dictionary<string, object>)DataHelper.Flatten(propertiesObj)!;
                     if (reader.TryGet("content", out string? content) && content != null)
                     {
                         if (reader.TryGet("type", out Type? type) && type != null)
@@ -33,10 +33,10 @@ namespace CorpseLib.StructuredText
                 return new("Bad json", "No properties");
             }
 
-            protected override void Serialize(Section obj, JsonObject writer)
+            protected override void Serialize(Section obj, DataObject writer)
             {
                 if (obj.m_Properties.Count == 0)
-                    writer["properties"] = new JsonObject();
+                    writer["properties"] = new DataObject();
                 else
                     writer["properties"] = obj.m_Properties;
                 writer["content"] = obj.m_Content;

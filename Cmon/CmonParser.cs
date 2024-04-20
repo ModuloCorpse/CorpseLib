@@ -1,12 +1,13 @@
 ﻿using CorpseLib.DataNotation;
 
-namespace CorpseLib.Json
+namespace CorpseLib.Cmon
 {
-    public class JsonParser : DataParser<JsonReader, JsonWriter, JsonFormat>
+    public class CmonParser : DataParser<CmonReader, CmonWriter, CmonFormat>
     {
-        public static readonly JsonFormat NETWORK_FORMAT = new()
+        public static readonly CmonFormat NETWORK_FORMAT = new()
         {
             InlineScope = true,
+            OpenScopeFirst = true,
             DoLineBreak = false,
             DoIndent = false,
         };

@@ -1,4 +1,4 @@
-﻿using CorpseLib.Json;
+﻿using CorpseLib.DataNotation;
 
 namespace CorpseLib.ManagedObject
 {
@@ -29,7 +29,7 @@ namespace CorpseLib.ManagedObject
             m_IsSerializable = isSerializable;
         }
 
-        protected Object(JsonObject json)
+        protected Object(DataObject json)
         {
             string id = json.GetOrDefault("id", Guid.NewGuid().ToString())!;
             string name = json.GetOrDefault("name", string.Empty);
@@ -37,28 +37,28 @@ namespace CorpseLib.ManagedObject
             Load(json);
         }
 
-        internal void Fill(JsonObject json) => Load(json);
+        internal void Fill(DataObject json) => Load(json);
 
         public bool IsSerializable() => m_IsSerializable;
 
         public void SetParent(CRTP parent) => m_Parent = parent;
 
-        internal JsonObject Serialize()
+        internal DataObject Serialize()
         {
-            JsonObject json = new()
+            DataObject json = new()
             {
                 { "id", ID },
                 { "name", Name }
             };
             if (m_Parent != null)
                 json.Add("parent", m_Parent.ID);
-            JsonObject obj = json;
+            DataObject obj = json;
             Save(ref obj);
             return json;
         }
 
-        abstract protected void Save(ref JsonObject json);
-        abstract protected void Load(JsonObject json);
+        abstract protected void Save(ref DataObject json);
+        abstract protected void Load(DataObject json);
 
         public override bool Equals(object? obj) => (obj != null && obj is Object<CRTP> other && other.ID == ID);
 

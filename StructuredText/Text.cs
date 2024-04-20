@@ -1,4 +1,4 @@
-﻿using CorpseLib.Json;
+﻿using CorpseLib.DataNotation;
 using System.Collections;
 using System.Text;
 
@@ -6,10 +6,10 @@ namespace CorpseLib.StructuredText
 {
     public class Text : IEnumerable<Section>, ICloneable
     {
-        public class JSerializer : AJsonSerializer<Text>
+        public class DataSerializer : ADataSerializer<Text>
         {
-            protected override OperationResult<Text> Deserialize(JsonObject reader) => new(new(reader.GetList<Section>("sections")));
-            protected override void Serialize(Text obj, JsonObject writer) => writer["sections"] = obj.m_Sections;
+            protected override OperationResult<Text> Deserialize(DataObject reader) => new(new(reader.GetList<Section>("sections")));
+            protected override void Serialize(Text obj, DataObject writer) => writer["sections"] = obj.m_Sections;
         }
 
         private readonly List<Section> m_Sections = [];

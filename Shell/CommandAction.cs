@@ -4,7 +4,7 @@ using static CorpseLib.Actions.ActionDefinition;
 
 namespace CorpseLib.Shell
 {
-    public class CommandAction(AAction action) : Command(action.ActionName)
+    public class CommandAction(AAction action) : Command(action.ActionName, action.ActionDescription)
     {
         private static readonly Dictionary<Type, AStringSerializer> ms_RegisteredSerializers = [];
         private static readonly StringNativeSerializer ms_Serializer = new();

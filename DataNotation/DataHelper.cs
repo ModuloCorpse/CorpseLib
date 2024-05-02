@@ -137,8 +137,8 @@ namespace CorpseLib.DataNotation
 
             if (token is DataObject jobj)
             {
-                DataSerializer jSerializer = NewSerializer();
-                OperationResult<object?> result = jSerializer.Deserialize(jobj, type);
+                DataSerializer serializer = NewSerializer();
+                OperationResult<object?> result = serializer.Deserialize(jobj, type);
                 if (result)
                 {
                     ret = result.Result;
@@ -196,11 +196,11 @@ namespace CorpseLib.DataNotation
             }
             else if (item is URI uri)
                 return new DataValue(uri.ToString());
-            DataSerializer jSerializer = NewSerializer();
+            DataSerializer serializer = NewSerializer();
             DataObject ret = [];
-            if (jSerializer.Serialize(item, ret))
+            if (serializer.Serialize(item, ret))
                 return ret;
-            throw new DataException(string.Format("Cannot cast item : No know conversion from '{0}' to json node", itemType.Name));
+            throw new DataException(string.Format("Cannot cast item : No know conversion from '{0}' to data node", itemType.Name));
         }
 
         public static object? Flatten(DataNode node)

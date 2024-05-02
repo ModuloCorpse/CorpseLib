@@ -64,9 +64,10 @@ namespace CorpseLib.Cmon
             {
                 if (child is DataValue)
                 {
-                    if (hasAppend && arr.ArrayType != typeof(string))
+                    if (hasAppend)
                     {
-                        m_Builder.Append(CmonReader.ARRAY_SEPARATOR);
+                        if (arr.ArrayType != typeof(string))
+                            m_Builder.Append(CmonReader.ARRAY_SEPARATOR);
                         LineBreak();
                     }
                     AppendNextNode(child);

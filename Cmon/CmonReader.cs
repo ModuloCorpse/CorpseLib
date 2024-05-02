@@ -113,8 +113,6 @@ namespace CorpseLib.Cmon
                     value = (value * 10) + (c - '0');
                 }
             } while (CanRead && c >= '0' && c <= '9');
-            if (!CanRead)
-                throw new CmonException("Misformatted cmon : Cmon ended with a number");
             return isNegative ? -value : value;
         }
 
@@ -139,34 +137,40 @@ namespace CorpseLib.Cmon
             {
                 bool isDecimal = false;
                 double value = ReadNumber(true);
-                c = Current;
-                if (c == '.')
+                if (CanRead)
                 {
-                    Next();
-                    isDecimal = true;
-                    double dec = ReadNumber(false);
-                    while (dec >= 1)
-                        dec /= 10;
-                    value += dec;
-                }
-                c = Current;
-                if (c == 'E' || c == 'e')
-                {
-                    Next();
-                    if (Current == '+')
+                    c = Current;
+                    if (c == '.')
+                    {
                         Next();
-                    long exponent = (long)ReadNumber(true);
-
-                    if (exponent < 0)
-                    {
-                        for (long u = 0; u != (-exponent); u++)
-                            value /= 10;
                         isDecimal = true;
+                        double dec = ReadNumber(false);
+                        while (dec >= 1)
+                            dec /= 10;
+                        value += dec;
                     }
-                    else
+                }
+                if (CanRead)
+                {
+                    c = Current;
+                    if (c == 'E' || c == 'e')
                     {
-                        for (long u = 0; u != exponent; u++)
-                            value *= 10;
+                        Next();
+                        if (Current == '+')
+                            Next();
+                        long exponent = (long)ReadNumber(true);
+
+                        if (exponent < 0)
+                        {
+                            for (long u = 0; u != (-exponent); u++)
+                                value /= 10;
+                            isDecimal = true;
+                        }
+                        else
+                        {
+                            for (long u = 0; u != exponent; u++)
+                                value *= 10;
+                        }
                     }
                 }
                 if (!isDecimal)

@@ -1,13 +1,15 @@
-﻿namespace CorpseLib.Shell
+﻿using System.Collections;
+
+namespace CorpseLib.Shell
 {
-    public class CLI(char commandPrefix)
+    public class CLI(char commandPrefix) : IEnumerable<Command>
     {
         private readonly Dictionary<string, Command> m_Commands = [];
         private readonly char m_Prefix = commandPrefix;
 
         public CLI() : this('\0') { }
 
-        public bool AddCommand(Command command)
+        public bool Add(Command command)
         {
             if (m_Commands.ContainsKey(command.Name))
                 return false;
@@ -36,5 +38,8 @@
             else
                 return new("Unknown command", string.Format("Unknown command {0}", commandName));
         }
+
+        public IEnumerator<Command> GetEnumerator() => ((IEnumerable<Command>)m_Commands.Values).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)m_Commands.Values).GetEnumerator();
     }
 }

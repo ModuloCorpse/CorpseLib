@@ -8,6 +8,7 @@ namespace CorpseLib.Actions
 
         public ArgumentDefinition[] ActionArguments => m_ActionDefinition.Arguments;
         public string ActionName => m_ActionDefinition.Name;
+        public string ActionDescription => m_ActionDefinition.Description;
 
         public abstract object?[] Call(object?[] args);
     }

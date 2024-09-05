@@ -11,31 +11,34 @@ namespace CorpseLib.Json
             while (CanRead)
             {
                 Next();
-                char c = Current;
-                if (c == '\\')
+                if (CanRead)
                 {
-                    Next();
-                    c = Current;
-                    switch (c)
+                    char c = Current;
+                    if (c == '\\')
                     {
-                        case '\'': stringBuilder.Append('\''); break;
-                        case '"': stringBuilder.Append('\"'); break;
-                        case '\\': stringBuilder.Append('\\'); break;
-                        case 'n': stringBuilder.Append('\n'); break;
-                        case 'r': stringBuilder.Append('\r'); break;
-                        case 't': stringBuilder.Append('\t'); break;
-                        case 'b': stringBuilder.Append('\b'); break;
-                        case 'f': stringBuilder.Append('\f'); break;
-                        default: stringBuilder.Append('\\'); stringBuilder.Append(c); break;
+                        Next();
+                        c = Current;
+                        switch (c)
+                        {
+                            case '\'': stringBuilder.Append('\''); break;
+                            case '"': stringBuilder.Append('\"'); break;
+                            case '\\': stringBuilder.Append('\\'); break;
+                            case 'n': stringBuilder.Append('\n'); break;
+                            case 'r': stringBuilder.Append('\r'); break;
+                            case 't': stringBuilder.Append('\t'); break;
+                            case 'b': stringBuilder.Append('\b'); break;
+                            case 'f': stringBuilder.Append('\f'); break;
+                            default: stringBuilder.Append('\\'); stringBuilder.Append(c); break;
+                        }
                     }
+                    else if (c == '"')
+                    {
+                        Next();
+                        return stringBuilder.ToString();
+                    }
+                    else
+                        stringBuilder.Append(c);
                 }
-                else if (c == '"')
-                {
-                    Next();
-                    return stringBuilder.ToString();
-                }
-                else
-                    stringBuilder.Append(c);
             }
             throw new JsonException("Unclosed string");
         }

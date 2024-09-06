@@ -21,12 +21,8 @@ namespace CorpseLib.Network
                 {
                     int bytesRead = await m_Stream.ReadAsync(readBuffer.AsMemory(0, readBuffer.Length));
                     if (bytesRead > 0)
-                    {
                         Received(readBuffer, bytesRead);
-                        StartReceiving();
-                    }
-                    else
-                        InternalDisconnect();
+                    StartReceiving();
                 }
                 catch (Exception ex)
                 {

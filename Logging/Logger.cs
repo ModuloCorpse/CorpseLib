@@ -40,8 +40,9 @@ namespace CorpseLib.Logging
                 StringBuilder builder = new();
                 foreach (string traceLine in Environment.StackTrace.Split('\n'))
                 {
-                    if (!traceLine.Contains("CorpseLib.Logging.Logger") && !traceLine.Contains("at System.Environment.get_StackTrace()"))
-                        builder.AppendLine(traceLine);
+                    string trace = traceLine.Trim();
+                    if (!string.IsNullOrEmpty(trace) && !trace.Contains("CorpseLib.Logging.Logger") && !trace.Contains("at System.Environment.get_StackTrace()"))
+                        builder.AppendLine(trace);
                 }
                 logContext.AddVariable("St", builder);
 

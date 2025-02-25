@@ -5,6 +5,29 @@ namespace CorpseLib
 {
     public static class Helper
     {
+        public static bool ChangeType<T>(object? value, out T? ret)
+        {
+            object? tmp = ChangeType(value, typeof(T));
+            if (tmp == null)
+            {
+                ret = default;
+                return false;
+            }
+            ret = (T)tmp;
+            return true;
+        }
+
+        public static object? ChangeType(object? value, Type type)
+        {
+            try
+            {
+                return Convert.ChangeType(value, type);
+            } catch
+            {
+                return null;
+            }
+        }
+
         public static T? Cast<T>(object? value) => (T?)Cast(value, typeof(T));
 
         public static object? Cast(object? value, Type type)
@@ -31,10 +54,12 @@ namespace CorpseLib
             }
             if (type.IsEnum)
             {
-                int enumValue = (int)Convert.ChangeType(value, typeof(int));
+                int? enumValue = (int?)ChangeType(value, typeof(int));
+                if (enumValue == null)
+                    return null;
                 return Enum.ToObject(type, enumValue);
             }
-            return Convert.ChangeType(value, type);
+            return ChangeType(value, type);
         }
 
         public static string ToString(IEnumerable enumerable, Func<object, string> elementConverter)

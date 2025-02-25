@@ -64,7 +64,7 @@ namespace CorpseLib.Serialize
         public int IndexOf(byte[] key)
         {
             int idx = m_Idx;
-            while (idx != m_Bytes.Length)
+            while (idx < m_Bytes.Length)
             {
                 if (Compare(key, idx))
                     return idx - m_Idx;

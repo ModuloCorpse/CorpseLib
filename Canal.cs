@@ -1,22 +1,98 @@
-﻿using System.Collections.Concurrent;
-
-namespace CorpseLib
+﻿namespace CorpseLib
 {
-    public class Canal
+    public class Canal(bool isAsync = false)
     {
-        private readonly ConcurrentDictionary<Action, byte> m_TriggerListeners = [];
-        public void Register(Action listener) { m_TriggerListeners.TryAdd(listener, 1); }
-        public void Unregister(Action listener) { m_TriggerListeners.Remove(listener, out byte _); }
-        public void Trigger() { foreach (Action listener in m_TriggerListeners.Keys) listener(); }
-        public void Clear() { m_TriggerListeners.Clear(); }
+        private readonly List<Action> m_TriggerListeners = [];
+        private readonly object m_Lock = new();
+        private readonly bool m_IsAsync = isAsync;
+
+        public void Register(Action listener)
+        {
+            lock (m_Lock)
+            {
+                m_TriggerListeners.Add(listener);
+            }
+        }
+
+        public void Unregister(Action listener)
+        {
+            lock (m_Lock)
+            {
+                m_TriggerListeners.Remove(listener);
+            }
+        }
+
+        private void InternalTrigger()
+        {
+            lock (m_Lock)
+            {
+                foreach (Action listener in m_TriggerListeners)
+                    listener();
+            }
+        }
+
+        public void Trigger()
+        {
+            if (m_IsAsync)
+                Task.Run(InternalTrigger);
+            else
+                InternalTrigger();
+        }
+
+        public void Clear()
+        {
+            lock (m_Lock)
+            {
+                m_TriggerListeners.Clear();
+            }
+        }
     }
 
-    public class Canal<TEventType>
+    public class Canal<TEventType>(bool isAsync = false)
     {
-        private readonly ConcurrentDictionary<Action<TEventType?>, byte> m_MessageListeners = [];
-        public void Register(Action<TEventType?> listener) { m_MessageListeners.TryAdd(listener, 1); }
-        public void Unregister(Action<TEventType?> listener) { m_MessageListeners.Remove(listener, out byte _); }
-        public void Emit(TEventType? arg) { foreach (Action<TEventType?> listener in m_MessageListeners.Keys) listener(arg); }
-        public void Clear() { m_MessageListeners.Clear(); }
+        private readonly List<Action<TEventType?>> m_MessageListeners = [];
+        private readonly object m_Lock = new();
+        private readonly bool m_IsAsync = isAsync;
+
+        public void Register(Action<TEventType?> listener)
+        {
+            lock (m_Lock)
+            {
+                m_MessageListeners.Add(listener);
+            }
+        }
+
+        public void Unregister(Action<TEventType?> listener)
+        {
+            lock (m_Lock)
+            {
+                m_MessageListeners.Remove(listener);
+            }
+        }
+
+        private void InternalEmit(TEventType? arg)
+        {
+            lock (m_Lock)
+            {
+                foreach (Action<TEventType?> listener in m_MessageListeners)
+                    listener(arg);
+            }
+        }
+
+        public void Emit(TEventType? arg)
+        {
+            if (m_IsAsync)
+                Task.Run(() => InternalEmit(arg));
+            else
+                InternalEmit(arg);
+        }
+
+        public void Clear()
+        {
+            lock (m_Lock)
+            {
+                m_MessageListeners.Clear();
+            }
+        }
     }
 }

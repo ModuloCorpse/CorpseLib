@@ -85,7 +85,7 @@ namespace CorpseLib.DataNotation
                     if (Cast(item, out object? listRet, arrType))
                         list.Add(listRet);
                 }
-                System.Array arr = System.Array.CreateInstance(arrType, list.Count);
+                Array arr = Array.CreateInstance(arrType, list.Count);
                 int i = 0;
                 foreach (object? item in list)
                     arr.SetValue(item, i++);

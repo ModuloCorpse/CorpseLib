@@ -1,94 +1,320 @@
 ﻿using System.Collections;
-using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace CorpseLib
 {
-    public abstract class ABiMap<TFirst, TSecond> : IEnumerable<KeyValuePair<TFirst, TSecond>> where TFirst : notnull where TSecond : notnull
+    public class BiMap<TKey, TValue> : IEnumerable<(TKey Key, TValue Value)>
     {
-        private readonly Dictionary<TFirst, TSecond> m_FtoS = [];
-        private readonly Dictionary<TSecond, TFirst> m_StoF = [];
+        private Entry[] m_Entries;
+        private int[] m_KeyBuckets;
+        private int[] m_ValueBuckets;
+        private int m_Count = 0;
+        private int m_FreeIndex = 0;
 
-        public int Count => m_FtoS.Count;
-        public Dictionary<TFirst, TSecond>.KeyCollection Keys => m_FtoS.Keys;
-        public Dictionary<TFirst, TSecond>.ValueCollection Values => m_FtoS.Values;
-
-        protected TSecond GetF(TFirst key) => m_FtoS[key];
-        protected TFirst GetS(TSecond key) => m_StoF[key];
-
-        protected bool ContainsF(TFirst key) => m_FtoS.ContainsKey(key);
-        protected bool ContainsS(TSecond key) => m_StoF.ContainsKey(key);
-
-        protected bool RemoveF(TFirst key)
+        [StructLayout(LayoutKind.Sequential)]
+        private struct Entry
         {
-            if (m_FtoS.TryGetValue(key, out TSecond? stofToRemove))
+            public TKey Key;
+            public TValue Value;
+            public int KeyHashCode;
+            public int ValueHashCode;
+            public int NextKey;
+            public int NextValue;
+            public bool IsDeleted;
+        }
+
+        public BiMap() : this(16) { }
+
+        public BiMap(int capacity)
+        {
+            m_Entries = new Entry[capacity];
+            m_KeyBuckets = new int[capacity];
+            m_ValueBuckets = new int[capacity];
+            Array.Fill(m_KeyBuckets, -1);
+            Array.Fill(m_ValueBuckets, -1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int GetBucketIndex(int hashCode, int length) => (hashCode & 0x7FFFFFFF) % length;
+
+        public void Add(TKey key, TValue value)
+        {
+            int keyHash = key?.GetHashCode() ?? 0;
+            int valHash = value?.GetHashCode() ?? 0;
+            if (FindIndexByKey(key, keyHash) >= 0)
+                throw new ArgumentException("Key already exist.");
+            if (FindIndexByValue(value, valHash) >= 0)
+                throw new ArgumentException("Value already exist.");
+            if (m_FreeIndex >= m_Entries.Length)
+                Resize();
+            int keyBucket = BiMap<TKey, TValue>.GetBucketIndex(keyHash, m_KeyBuckets.Length);
+            int valueBucket = BiMap<TKey, TValue>.GetBucketIndex(valHash, m_ValueBuckets.Length);
+            m_Entries[m_FreeIndex] = new Entry { Key = key, Value = value, KeyHashCode = keyHash, ValueHashCode = valHash, NextKey = m_KeyBuckets[keyBucket], NextValue = m_ValueBuckets[valueBucket], IsDeleted = false };
+            m_KeyBuckets[keyBucket] = m_FreeIndex;
+            m_ValueBuckets[valueBucket] = m_FreeIndex;
+            m_FreeIndex++;
+            m_Count++;
+        }
+
+        public bool TryGetValue(TKey key, out TValue? value)
+        {
+            int index = FindIndexByKey(key, key?.GetHashCode() ?? 0);
+            if (index >= 0)
             {
-                m_StoF.Remove(stofToRemove);
-                return m_FtoS.Remove(key);
+                value = m_Entries[index].Value;
+                return true;
+            }
+            value = default;
+            return false;
+        }
+
+        public bool TryGetKey(TValue value, out TKey? key)
+        {
+            int index = FindIndexByValue(value, value?.GetHashCode() ?? 0);
+            if (index >= 0)
+            {
+                key = m_Entries[index].Key;
+                return true;
+            }
+            key = default;
+            return false;
+        }
+
+        public TValue GetValue(TKey key)
+        {
+            if (TryGetValue(key, out var value))
+                return value!;
+            throw new KeyNotFoundException($"Cannot find key : {key}");
+        }
+
+        public TKey GetKey(TValue value)
+        {
+            if (TryGetKey(value, out var key))
+                return key!;
+            throw new KeyNotFoundException($"Cannot find value : {value}");
+        }
+
+        public bool RemoveByKey(TKey key)
+        {
+            int hash = key?.GetHashCode() ?? 0;
+            int bucket = BiMap<TKey, TValue>.GetBucketIndex(hash, m_KeyBuckets.Length);
+            int prev = -1;
+            for (int i = m_KeyBuckets[bucket]; i >= 0; i = m_Entries[i].NextKey)
+            {
+                if (!m_Entries[i].IsDeleted && m_Entries[i].KeyHashCode == hash && Equals(m_Entries[i].Key, key))
+                {
+                    if (prev < 0)
+                        m_KeyBuckets[bucket] = m_Entries[i].NextKey;
+                    else
+                        m_Entries[prev].NextKey = m_Entries[i].NextKey;
+                    RemoveFromValueBucket(i);
+                    m_Entries[i].IsDeleted = true;
+                    m_Count--;
+                    return true;
+                }
+                prev = i;
             }
             return false;
         }
 
-        protected bool RemoveS(TSecond key)
+        public bool RemoveByValue(TValue value)
         {
-            if (m_StoF.TryGetValue(key, out TFirst? ftosToRemove))
+            int hash = value?.GetHashCode() ?? 0;
+            int bucket = BiMap<TKey, TValue>.GetBucketIndex(hash, m_ValueBuckets.Length);
+            int prev = -1;
+            for (int i = m_ValueBuckets[bucket]; i >= 0; i = m_Entries[i].NextValue)
             {
-                m_FtoS.Remove(ftosToRemove);
-                return m_StoF.Remove(key);
+                if (!m_Entries[i].IsDeleted && m_Entries[i].ValueHashCode == hash && Equals(m_Entries[i].Value, value))
+                {
+                    if (prev < 0)
+                        m_ValueBuckets[bucket] = m_Entries[i].NextValue;
+                    else
+                        m_Entries[prev].NextValue = m_Entries[i].NextValue;
+                    RemoveFromKeyBucket(i);
+                    m_Entries[i].IsDeleted = true;
+                    m_Count--;
+                    return true;
+                }
+                prev = i;
             }
             return false;
         }
 
-        protected bool TryGetF(TFirst key, [MaybeNullWhen(false)] out TSecond value) => m_FtoS.TryGetValue(key, out value);
-        protected bool TryGetS(TSecond key, [MaybeNullWhen(false)] out TFirst value) => m_StoF.TryGetValue(key, out value);
-
-        public void Add(TFirst key, TSecond value)
+        private void RemoveFromKeyBucket(int index)
         {
-            m_FtoS[key] = value;
-            m_StoF[value] = key;
+            int bucket = BiMap<TKey, TValue>.GetBucketIndex(m_Entries[index].KeyHashCode, m_KeyBuckets.Length);
+            int prev = -1;
+            for (int i = m_KeyBuckets[bucket]; i >= 0; i = m_Entries[i].NextKey)
+            {
+                if (i == index)
+                {
+                    if (prev < 0)
+                        m_KeyBuckets[bucket] = m_Entries[i].NextKey;
+                    else
+                        m_Entries[prev].NextKey = m_Entries[i].NextKey;
+                    return;
+                }
+                prev = i;
+            }
         }
 
-        public void Clear()
+        private void RemoveFromValueBucket(int index)
         {
-            m_FtoS.Clear();
-            m_StoF.Clear();
+            int bucket = BiMap<TKey, TValue>.GetBucketIndex(m_Entries[index].ValueHashCode, m_ValueBuckets.Length);
+            int prev = -1;
+            for (int i = m_ValueBuckets[bucket]; i >= 0; i = m_Entries[i].NextValue)
+            {
+                if (i == index)
+                {
+                    if (prev < 0)
+                        m_ValueBuckets[bucket] = m_Entries[i].NextValue;
+                    else
+                        m_Entries[prev].NextValue = m_Entries[i].NextValue;
+                    return;
+                }
+                prev = i;
+            }
         }
 
-        public IEnumerator<KeyValuePair<TFirst, TSecond>> GetEnumerator() => ((IEnumerable<KeyValuePair<TFirst, TSecond>>)m_FtoS).GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)m_FtoS).GetEnumerator();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int FindIndexByKey(TKey key, int hash)
+        {
+            int bucket = BiMap<TKey, TValue>.GetBucketIndex(hash, m_KeyBuckets.Length);
+            for (int i = m_KeyBuckets[bucket]; i >= 0; i = m_Entries[i].NextKey)
+            {
+                if (!m_Entries[i].IsDeleted && m_Entries[i].KeyHashCode == hash && Equals(m_Entries[i].Key, key))
+                    return i;
+            }
+            return -1;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int FindIndexByValue(TValue value, int hash)
+        {
+            int bucket = BiMap<TKey, TValue>.GetBucketIndex(hash, m_ValueBuckets.Length);
+            for (int i = m_ValueBuckets[bucket]; i >= 0; i = m_Entries[i].NextValue)
+            {
+                if (!m_Entries[i].IsDeleted && m_Entries[i].ValueHashCode == hash && Equals(m_Entries[i].Value, value))
+                    return i;
+            }
+            return -1;
+        }
+
+        private void Resize()
+        {
+            int newSize = m_Entries.Length * 2;
+            Array.Resize(ref m_Entries, newSize);
+            var newKeyBuckets = new int[newSize];
+            var newValueBuckets = new int[newSize];
+            Array.Fill(newKeyBuckets, -1);
+            Array.Fill(newValueBuckets, -1);
+            for (int i = 0; i < m_FreeIndex; i++)
+            {
+                if (m_Entries[i].IsDeleted)
+                    continue;
+                int keyBucket = BiMap<TKey, TValue>.GetBucketIndex(m_Entries[i].KeyHashCode, newSize);
+                int valueBucket = BiMap<TKey, TValue>.GetBucketIndex(m_Entries[i].ValueHashCode, newSize);
+                m_Entries[i].NextKey = newKeyBuckets[keyBucket];
+                m_Entries[i].NextValue = newValueBuckets[valueBucket];
+                newKeyBuckets[keyBucket] = i;
+                newValueBuckets[valueBucket] = i;
+            }
+            m_KeyBuckets = newKeyBuckets;
+            m_ValueBuckets = newValueBuckets;
+        }
+
+        public int Count => m_Count;
+
+        public IEnumerator<(TKey Key, TValue Value)> GetEnumerator()
+        {
+            for (int i = 0; i < m_FreeIndex; i++)
+            {
+                if (!m_Entries[i].IsDeleted)
+                    yield return (m_Entries[i].Key, m_Entries[i].Value);
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
-
-    public class BiMap<TFirst, TSecond> : ABiMap<TFirst, TSecond> where TFirst : notnull where TSecond : notnull
+    public class ConcurrentBiMap<TKey, TValue> : IEnumerable<(TKey Key, TValue Value)>
     {
-        public TSecond this[TFirst key]
+        private readonly ReaderWriterLockSlim _lock = new();
+        private readonly BiMap<TKey, TValue> _inner = [];
+
+        public void Add(TKey key, TValue value)
         {
-            get => GetF(key);
-            set => Add(key, value);
-        }
-        public TFirst this[TSecond key]
-        {
-            get => GetS(key);
-            set => Add(value, key);
+            _lock.EnterWriteLock();
+            try { _inner.Add(key, value); }
+            finally { _lock.ExitWriteLock(); }
         }
 
-        public bool ContainsKey(TFirst key) => ContainsF(key);
-        public bool ContainsKey(TSecond key) => ContainsS(key);
-        public bool Remove(TFirst key) => RemoveF(key);
-        public bool Remove(TSecond key) => RemoveS(key);
-        public bool TryGetValue(TFirst key, [MaybeNullWhen(false)] out TSecond value) => TryGetF(key, out value);
-        public bool TryGetValue(TSecond key, [MaybeNullWhen(false)] out TFirst value) => TryGetS(key, out value);
-    }
+        public bool RemoveByKey(TKey key)
+        {
+            _lock.EnterWriteLock();
+            try { return _inner.RemoveByKey(key); }
+            finally { _lock.ExitWriteLock(); }
+        }
 
-    public class BiMap<T> : ABiMap<T, T> where T : notnull
-    {
-        public T GetFirst(T key) => GetF(key);
-        public void SetFirst(T key, T value) => Add(key, value);
-        public T GetSecond(T key) => GetS(key);
-        public void SetSecond(T key, T value) => Add(value, key);
-        public bool ContainsKeyFirst(T key) => ContainsF(key);
-        public bool ContainsKeySecond(T key) => ContainsS(key);
-        public bool RemoveFirst(T key) => RemoveF(key);
-        public bool RemoveSecond(T key) => RemoveS(key);
-        public bool TryGetValueFirst(T key, [MaybeNullWhen(false)] out T value) => TryGetF(key, out value);
-        public bool TryGetValueSecond(T key, [MaybeNullWhen(false)] out T value) => TryGetS(key, out value);
+        public bool RemoveByValue(TValue value)
+        {
+            _lock.EnterWriteLock();
+            try { return _inner.RemoveByValue(value); }
+            finally { _lock.ExitWriteLock(); }
+        }
+
+        public bool TryGetValue(TKey key, out TValue? value)
+        {
+            _lock.EnterReadLock();
+            try { return _inner.TryGetValue(key, out value); }
+            finally { _lock.ExitReadLock(); }
+        }
+
+        public bool TryGetKey(TValue value, out TKey? key)
+        {
+            _lock.EnterReadLock();
+            try { return _inner.TryGetKey(value, out key); }
+            finally { _lock.ExitReadLock(); }
+        }
+
+        public TValue GetValue(TKey key)
+        {
+            _lock.EnterReadLock();
+            try { return _inner.GetValue(key); }
+            finally { _lock.ExitReadLock(); }
+        }
+
+        public TKey GetKey(TValue value)
+        {
+            _lock.EnterReadLock();
+            try { return _inner.GetKey(value); }
+            finally { _lock.ExitReadLock(); }
+        }
+
+        public int Count
+        {
+            get
+            {
+                _lock.EnterReadLock();
+                try { return _inner.Count; }
+                finally { _lock.ExitReadLock(); }
+            }
+        }
+
+        public IEnumerator<(TKey Key, TValue Value)> GetEnumerator()
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                foreach (var kv in _inner)
+                    yield return kv;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

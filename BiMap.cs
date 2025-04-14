@@ -237,81 +237,82 @@ namespace CorpseLib
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
+
     public class ConcurrentBiMap<TKey, TValue> : IEnumerable<(TKey Key, TValue Value)>
     {
-        private readonly ReaderWriterLockSlim _lock = new();
-        private readonly BiMap<TKey, TValue> _inner = [];
+        private readonly ReaderWriterLockSlim m_Lock = new();
+        private readonly BiMap<TKey, TValue> m_Inner = [];
 
         public void Add(TKey key, TValue value)
         {
-            _lock.EnterWriteLock();
-            try { _inner.Add(key, value); }
-            finally { _lock.ExitWriteLock(); }
+            m_Lock.EnterWriteLock();
+            try { m_Inner.Add(key, value); }
+            finally { m_Lock.ExitWriteLock(); }
         }
 
         public bool RemoveByKey(TKey key)
         {
-            _lock.EnterWriteLock();
-            try { return _inner.RemoveByKey(key); }
-            finally { _lock.ExitWriteLock(); }
+            m_Lock.EnterWriteLock();
+            try { return m_Inner.RemoveByKey(key); }
+            finally { m_Lock.ExitWriteLock(); }
         }
 
         public bool RemoveByValue(TValue value)
         {
-            _lock.EnterWriteLock();
-            try { return _inner.RemoveByValue(value); }
-            finally { _lock.ExitWriteLock(); }
+            m_Lock.EnterWriteLock();
+            try { return m_Inner.RemoveByValue(value); }
+            finally { m_Lock.ExitWriteLock(); }
         }
 
         public bool TryGetValue(TKey key, out TValue? value)
         {
-            _lock.EnterReadLock();
-            try { return _inner.TryGetValue(key, out value); }
-            finally { _lock.ExitReadLock(); }
+            m_Lock.EnterReadLock();
+            try { return m_Inner.TryGetValue(key, out value); }
+            finally { m_Lock.ExitReadLock(); }
         }
 
         public bool TryGetKey(TValue value, out TKey? key)
         {
-            _lock.EnterReadLock();
-            try { return _inner.TryGetKey(value, out key); }
-            finally { _lock.ExitReadLock(); }
+            m_Lock.EnterReadLock();
+            try { return m_Inner.TryGetKey(value, out key); }
+            finally { m_Lock.ExitReadLock(); }
         }
 
         public TValue GetValue(TKey key)
         {
-            _lock.EnterReadLock();
-            try { return _inner.GetValue(key); }
-            finally { _lock.ExitReadLock(); }
+            m_Lock.EnterReadLock();
+            try { return m_Inner.GetValue(key); }
+            finally { m_Lock.ExitReadLock(); }
         }
 
         public TKey GetKey(TValue value)
         {
-            _lock.EnterReadLock();
-            try { return _inner.GetKey(value); }
-            finally { _lock.ExitReadLock(); }
+            m_Lock.EnterReadLock();
+            try { return m_Inner.GetKey(value); }
+            finally { m_Lock.ExitReadLock(); }
         }
 
         public int Count
         {
             get
             {
-                _lock.EnterReadLock();
-                try { return _inner.Count; }
-                finally { _lock.ExitReadLock(); }
+                m_Lock.EnterReadLock();
+                try { return m_Inner.Count; }
+                finally { m_Lock.ExitReadLock(); }
             }
         }
 
         public IEnumerator<(TKey Key, TValue Value)> GetEnumerator()
         {
-            _lock.EnterReadLock();
+            m_Lock.EnterReadLock();
             try
             {
-                foreach (var kv in _inner)
+                foreach (var kv in m_Inner)
                     yield return kv;
             }
             finally
             {
-                _lock.ExitReadLock();
+                m_Lock.ExitReadLock();
             }
         }
 

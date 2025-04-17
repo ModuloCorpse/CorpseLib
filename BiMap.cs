@@ -57,6 +57,7 @@ namespace CorpseLib
             m_Count++;
         }
 
+        public bool ContainsKey(TKey key) => FindIndexByKey(key, key?.GetHashCode() ?? 0) >= 0;
         public bool TryGetValue(TKey key, out TValue? value)
         {
             int index = FindIndexByKey(key, key?.GetHashCode() ?? 0);
@@ -69,6 +70,7 @@ namespace CorpseLib
             return false;
         }
 
+        public bool ContainsValue(TValue value) => FindIndexByValue(value, value?.GetHashCode() ?? 0) >= 0;
         public bool TryGetKey(TValue value, out TKey? key)
         {
             int index = FindIndexByValue(value, value?.GetHashCode() ?? 0);

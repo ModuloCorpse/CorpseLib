@@ -1,5 +1,4 @@
-﻿using CorpseLib.Json;
-using CorpseLib.Serialize;
+﻿using CorpseLib.Serialize;
 using System.Net.Sockets;
 
 namespace CorpseLib.Network

@@ -15,7 +15,7 @@
                 Directory.CreateDirectory(m_VaultPath);
         }
 
-        public LocalVault(IEncryptionAlgorithm defaultEncryptionAlgorithm) : this("./vault", "./vault_key", defaultEncryptionAlgorithm) { }
+        public LocalVault(IEncryptionAlgorithm defaultEncryptionAlgorithm) : this("vault", "vault_key", defaultEncryptionAlgorithm) { }
 
         public void SetPassword(string password)
         {
@@ -32,8 +32,11 @@
                 newAlgorithm = m_DefaultEncryptionAlgorithm;
             }
             string[] vaultFiles = Directory.GetFiles(m_VaultPath);
-            foreach (string vaultFile in vaultFiles)
+            foreach (string vaultFilePath in vaultFiles)
+            {
+                string vaultFile = Path.GetFileName(vaultFilePath);
                 SaveValue(vaultFile, LoadValue(vaultFile, oldAlgorithm), newAlgorithm);
+            }
         }
 
         private IEncryptionAlgorithm GetEncryptionAlgorithm()

@@ -12,9 +12,9 @@ namespace CorpseLib.Network
         public void OnReopening() => m_Logger.Log("[MONITOR] Connection reopenning");
         public void OnReopen() => m_Logger.Log("[MONITOR] Connection reopenned");
         public void OnReceive(byte[] bytes) { }
-        public void OnReceive(object obj) => m_Logger.Log(string.Format("[MONITOR] Received: {0}", obj));
-        public void OnSend(object obj) => m_Logger.Log(string.Format("[MONITOR] Sent: {0}", obj));
+        public void OnReceive(object obj) => m_Logger.Log("[MONITOR] Received: ${0}", obj);
+        public void OnSend(object obj) => m_Logger.Log("[MONITOR] Sent: ${0}", obj);
         public void OnSend(byte[] bytes) { }
-        public void OnException(Exception ex) => m_Logger.Log(string.Format("[MONITOR] Exception: {0}", ex));
+        public void OnException(Exception ex) => m_Logger.Log("[MONITOR] Exception: ${0}", ex);
     }
 }

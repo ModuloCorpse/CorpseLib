@@ -22,7 +22,7 @@ namespace CorpseLib.Logging
         public void Add(IExtension extension) => m_Extensions.Add(extension);
         public void Add(Action<string> extension) => m_Extensions.Add(new LambdaExtension(extension));
 
-        public void Log(string logContent, Context context)
+        private void InternalLog(string logContent, Context context)
         {
             if (m_Started)
             {
@@ -52,7 +52,22 @@ namespace CorpseLib.Logging
             }
         }
 
-        public void Log(string logContent) => Log(logContent, new());
+        public void Log(string logContent, Context context) => InternalLog(logContent, context);
+        public void Log(string logContent) => InternalLog(logContent, new());
+        public void Log(string logContent, params object[] args)
+        {
+            Context logContext = new();
+            int i = 0;
+            foreach (object arg in args)
+            {
+                if (arg is ILoggable loggable)
+                    logContext.AddVariable(i.ToString(), loggable.ToLog());
+                else
+                    logContext.AddVariable(i.ToString(), arg.ToString() ?? string.Empty);
+                ++i;
+            }
+            Log(logContent, logContext);
+        }
 
         //Logger are not real Enumerator, they implement the interface to allow the list init when creating new Logger
         public IEnumerator<IExtension> GetEnumerator() => throw new NotImplementedException();

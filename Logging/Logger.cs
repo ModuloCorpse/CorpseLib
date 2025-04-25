@@ -35,7 +35,6 @@ namespace CorpseLib.Logging
                 logContext.AddVariable("m", now.Minute);
                 logContext.AddVariable("s", now.Second);
                 logContext.AddVariable("ms", now.Millisecond);
-                logContext.AddVariable("log", logContent);
 
                 StringBuilder builder = new();
                 foreach (string traceLine in Environment.StackTrace.Split('\n'))
@@ -45,6 +44,8 @@ namespace CorpseLib.Logging
                         builder.AppendLine(trace);
                 }
                 logContext.AddVariable("St", builder);
+
+                logContext.AddVariable("log", Converter.Convert(logContent, [logContext, context]));
 
                 string log = Converter.Convert(m_Format, [logContext, context]);
                 foreach (IExtension extension in m_Extensions)

@@ -29,15 +29,25 @@ namespace CorpseLib.Network
         }
 
         public override void TestRead(BytesWriter bytesWriter) => TestReceived(bytesWriter);
+
         public override List<object> Read()
         {
             m_Stream.ReadTimeout = m_ReadTimeout;
             byte[] readBuffer = new byte[1024];
+            int bytesRead;
+            int totalBytesRead = 0;
+            byte[] buffer = [];
             try
             {
-                int bytesRead = m_Stream.Read(readBuffer, 0, readBuffer.Length);
-                if (bytesRead > 0)
-                    return Received(readBuffer, bytesRead);
+                while ((bytesRead = m_Stream.Read(readBuffer, 0, readBuffer.Length)) == readBuffer.Length)
+                {
+                    Append(ref buffer, readBuffer, bytesRead);
+                    totalBytesRead += bytesRead;
+                }
+                Append(ref buffer, readBuffer, bytesRead);
+                totalBytesRead += bytesRead;
+                if (totalBytesRead > 0)
+                    return Received(buffer, totalBytesRead);
             }
             catch (Exception ex)
             {

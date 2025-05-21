@@ -1,4 +1,5 @@
 ﻿using CorpseLib.Serialize;
+using System;
 using System.Net.Sockets;
 
 namespace CorpseLib.Network
@@ -16,11 +17,21 @@ namespace CorpseLib.Network
             Task.Run(async () =>
             {
                 byte[] readBuffer = new byte[1024];
+                int totalBytesRead = 0;
+                byte[] buffer = [];
                 try
                 {
                     int bytesRead = await m_Stream.ReadAsync(readBuffer.AsMemory(0, readBuffer.Length));
+                    while (bytesRead == readBuffer.Length)
+                    {
+                        Append(ref buffer, readBuffer, bytesRead);
+                        totalBytesRead += bytesRead;
+                        bytesRead = m_Stream.Read(readBuffer, 0, readBuffer.Length);
+                    }
+                    Append(ref buffer, readBuffer, bytesRead);
+                    totalBytesRead += bytesRead;
                     if (bytesRead > 0)
-                        Received(readBuffer, bytesRead);
+                        Received(buffer, totalBytesRead);
                     StartReceiving();
                 }
                 catch (Exception ex)

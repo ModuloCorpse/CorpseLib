@@ -76,6 +76,14 @@ namespace CorpseLib.Network
 
         internal BytesSerializer BytesSerializer => m_BytesSerializer;
 
+        protected static void Append(ref byte[] dst, byte[] src, int count)
+        {
+            byte[] rv = new byte[dst.Length + count];
+            Buffer.BlockCopy(dst, 0, rv, 0, dst.Length);
+            Buffer.BlockCopy(src, 0, rv, dst.Length, count);
+            dst = rv;
+        }
+
         protected void DiscardException(Exception ex)
         {
             m_Protocol.DiscardException(ex);
@@ -195,12 +203,6 @@ namespace CorpseLib.Network
         {
             m_Monitor?.OnReceive(readBuffer[..bytesRead]);
             m_BytesReader.Append(readBuffer, bytesRead);
-            while (bytesRead == readBuffer.Length)
-            {
-                bytesRead = m_Stream.Read(readBuffer, 0, readBuffer.Length);
-                m_Monitor?.OnReceive(readBuffer[..bytesRead]);
-                m_BytesReader.Append(readBuffer, bytesRead);
-            }
             List<object> packets = [];
             bool readSuccess;
             do

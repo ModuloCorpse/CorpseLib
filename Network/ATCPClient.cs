@@ -84,6 +84,22 @@ namespace CorpseLib.Network
             dst = rv;
         }
 
+        protected void ReadAllStream(ref byte[] buffer)
+        {
+            byte[] readBuffer = new byte[1024];
+            int bytesRead;
+            try
+            {
+                while ((bytesRead = m_Stream.Read(readBuffer, 0, readBuffer.Length)) == readBuffer.Length)
+                    Append(ref buffer, readBuffer, bytesRead);
+                Append(ref buffer, readBuffer, bytesRead);
+            }
+            catch (Exception ex)
+            {
+                DiscardException(ex);
+            }
+        }
+
         protected void DiscardException(Exception ex)
         {
             m_Protocol.DiscardException(ex);
@@ -199,10 +215,10 @@ namespace CorpseLib.Network
         public bool Connect() => InternalConnect(TimeSpan.FromMinutes(1), false);
         public bool Connect(TimeSpan timeout) => InternalConnect(timeout, false);
 
-        protected List<object> Received(byte[] readBuffer, int bytesRead)
+        protected List<object> Received(byte[] readBuffer)
         {
-            m_Monitor?.OnReceive(readBuffer[..bytesRead]);
-            m_BytesReader.Append(readBuffer, bytesRead);
+            m_Monitor?.OnReceive(readBuffer);
+            m_BytesReader.Append(readBuffer);
             List<object> packets = [];
             bool readSuccess;
             do

@@ -17,21 +17,15 @@ namespace CorpseLib.Network
             Task.Run(async () =>
             {
                 byte[] readBuffer = new byte[1024];
-                int totalBytesRead = 0;
                 byte[] buffer = [];
                 try
                 {
                     int bytesRead = await m_Stream.ReadAsync(readBuffer.AsMemory(0, readBuffer.Length));
-                    while (bytesRead == readBuffer.Length)
-                    {
-                        Append(ref buffer, readBuffer, bytesRead);
-                        totalBytesRead += bytesRead;
-                        bytesRead = m_Stream.Read(readBuffer, 0, readBuffer.Length);
-                    }
                     Append(ref buffer, readBuffer, bytesRead);
-                    totalBytesRead += bytesRead;
-                    if (bytesRead > 0)
-                        Received(buffer, totalBytesRead);
+                    if (bytesRead == readBuffer.Length)
+                        ReadAllStream(ref buffer);
+                    if (buffer.Length > 0)
+                        Received(buffer);
                     StartReceiving();
                 }
                 catch (Exception ex)

@@ -54,6 +54,18 @@ namespace CorpseLib.Database
             }
         }
 
+        public void Remove(Entry entry)
+        {
+            if (m_Entries.Remove(entry.Guid))
+                EntryRemoved?.Invoke(this, entry.Guid);
+        }
+
+        public void Remove(Guid entryID)
+        {
+            if (m_Entries.Remove(entryID))
+                EntryRemoved?.Invoke(this, entryID);
+        }
+
         public void Insert(DBEntry entry)
         {
             EntryWriter newWriter = new(m_BytesSerializer, m_EntrySerializer, this);

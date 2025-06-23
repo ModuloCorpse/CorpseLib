@@ -7,22 +7,22 @@ namespace CorpseLib.Json
         private void AppendSeparator()
         {
             m_Builder.Append(',');
-            LineBreak();
+            AppendLine();
         }
 
         private void OpenScope(char scope)
         {
             if (!m_Format.InlineScope && m_Builder.Length != 0)
-                LineBreak();
+                AppendLine();
             m_Builder.Append(scope);
             Indent();
-            LineBreak();
+            AppendLine();
         }
 
         private void CloseScope(char scope)
         {
             Unindent();
-            LineBreak();
+            AppendLine();
             m_Builder.Append(scope);
         }
 

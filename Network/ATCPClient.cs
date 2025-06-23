@@ -14,7 +14,7 @@ namespace CorpseLib.Network
 
         protected readonly AProtocol m_Protocol;
         private readonly URI m_URL;
-        private Socket m_Socket;
+        protected Socket m_Socket;
         protected Stream m_Stream;
         private readonly BytesSerializer m_BytesSerializer = new();
         private readonly BytesReader m_BytesReader;
@@ -98,6 +98,12 @@ namespace CorpseLib.Network
             {
                 DiscardException(ex);
             }
+        }
+
+        protected void Log(string log)
+        {
+            m_Protocol.Log(log);
+            m_Monitor?.OnLog(log);
         }
 
         protected void DiscardException(Exception ex)
@@ -220,7 +226,6 @@ namespace CorpseLib.Network
             m_Monitor?.OnReceive(readBuffer);
             m_BytesReader.Append(readBuffer);
             List<object> packets = [];
-            bool readSuccess;
             do
             {
                 m_BytesReader.LockIdx();
@@ -235,14 +240,13 @@ namespace CorpseLib.Network
                         m_Monitor?.OnReceive(resultData);
                         HandleReceivedPacket(resultData);
                     }
-                    readSuccess = true;
                 }
                 else
                 {
                     m_BytesReader.RevertIdx();
-                    readSuccess = false;
+                    return packets;
                 }
-            } while (m_BytesReader.CanRead() && readSuccess);
+            } while (m_BytesReader.CanRead());
             return packets;
         }
 

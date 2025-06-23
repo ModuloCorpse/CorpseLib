@@ -13,7 +13,7 @@ namespace CorpseLib.Network
                 TCPAsyncClient client = new(NewProtocol(), NewClientID(), acceptedSocket);
                 AddClient(client);
                 client.StartReceiving();
-                m_ServerSocket.BeginAccept(AcceptCallback, m_ServerSocket);
+                m_ServerSocket.BeginAccept(AcceptCallback, null);
             }
             catch
             {

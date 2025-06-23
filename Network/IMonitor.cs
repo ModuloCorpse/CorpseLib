@@ -12,5 +12,6 @@
         void OnReceive(object obj);
         void OnClose();
         void OnException(Exception ex);
+        void OnLog(string log);
     }
 }

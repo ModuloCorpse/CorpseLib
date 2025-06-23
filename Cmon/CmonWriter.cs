@@ -11,16 +11,16 @@ namespace CorpseLib.Cmon
         private void OpenScope(char scope)
         {
             if (!m_Format.InlineScope && m_Builder.Length != 0)
-                LineBreak();
+                AppendLine();
             m_Builder.Append(scope);
             Indent();
-            LineBreak();
+            AppendLine();
         }
 
         private void CloseScope(char scope)
         {
             Unindent();
-            LineBreak();
+            AppendLine();
             m_Builder.Append(scope);
         }
 
@@ -32,7 +32,7 @@ namespace CorpseLib.Cmon
                 if (ObjectKeyRegex().IsMatch(child.Key))
                 {
                     if (hasAppend)
-                        LineBreak();
+                        AppendLine();
                     m_Builder.Append(child.Key);
                     DataNode childObj = child.Value;
                     if (childObj is DataValue)
@@ -68,7 +68,7 @@ namespace CorpseLib.Cmon
                     {
                         if (arr.ArrayType != typeof(string))
                             m_Builder.Append(CmonReader.ARRAY_SEPARATOR);
-                        LineBreak();
+                        AppendLine();
                     }
                     AppendNextNode(child);
                     hasAppend = true;
@@ -76,7 +76,7 @@ namespace CorpseLib.Cmon
                 else if (child is DataObject)
                 {
                     if (hasAppend)
-                        LineBreak();
+                        AppendLine();
                     OpenScope('{');
                     AppendNextNode(child);
                     CloseScope('}');
@@ -85,7 +85,7 @@ namespace CorpseLib.Cmon
                 else if (child is DataArray)
                 {
                     if (hasAppend)
-                        LineBreak();
+                        AppendLine();
                     OpenScope('[');
                     AppendNextNode(child);
                     CloseScope(']');

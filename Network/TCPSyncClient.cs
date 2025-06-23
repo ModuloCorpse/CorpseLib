@@ -32,11 +32,15 @@ namespace CorpseLib.Network
 
         public override List<object> Read()
         {
-            m_Stream.ReadTimeout = m_ReadTimeout;
+            m_Socket.ReceiveTimeout = m_ReadTimeout;
+            byte[] readBuffer = new byte[1024];
             byte[] buffer = [];
             try
             {
-                ReadAllStream(ref buffer);
+                int bytesRead = m_Stream.Read(readBuffer, 0, readBuffer.Length);
+                Append(ref buffer, readBuffer, bytesRead);
+                if (bytesRead == readBuffer.Length)
+                    ReadAllStream(ref buffer);
                 if (buffer.Length > 0)
                     return Received(buffer);
             }

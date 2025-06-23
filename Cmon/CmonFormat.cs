@@ -1,8 +1,6 @@
-﻿using CorpseLib.DataNotation;
-
-namespace CorpseLib.Cmon
+﻿namespace CorpseLib.Cmon
 {
-    public class CmonFormat() : DataFormat()
+    public class CmonFormat() : StringBuilderFormat()
     {
         public bool InlineScope = true;
         public bool OpenScopeFirst = false;

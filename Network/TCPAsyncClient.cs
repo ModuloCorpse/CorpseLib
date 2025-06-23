@@ -1,5 +1,4 @@
 ﻿using CorpseLib.Serialize;
-using System;
 using System.Net.Sockets;
 
 namespace CorpseLib.Network
@@ -11,12 +10,11 @@ namespace CorpseLib.Network
         public TCPAsyncClient(AProtocol protocol, URI url, int id = 0) : base(protocol, url, id) { }
         internal TCPAsyncClient(AProtocol protocol, int id, Socket socket) : base(protocol, id, socket) { }
 
-        internal void StartReceiving()
+        private async void AsyncReceive()
         {
-            m_IsReceiving = true;
-            Task.Run(async () =>
+            byte[] readBuffer = new byte[1024];
+            while (true)
             {
-                byte[] readBuffer = new byte[1024];
                 byte[] buffer = [];
                 try
                 {
@@ -26,19 +24,25 @@ namespace CorpseLib.Network
                         ReadAllStream(ref buffer);
                     if (buffer.Length > 0)
                         Received(buffer);
-                    StartReceiving();
                 }
                 catch (Exception ex)
                 {
                     DiscardException(ex);
                     InternalDisconnect();
+                    return;
                 }
-            });
+            }
         }
 
-        protected override void HandleReceivedPacket(object packet) => Task.Run(() => { m_Protocol.TreatPacket(packet); });
+        internal void StartReceiving()
+        {
+            m_IsReceiving = true;
+            Task.Run(AsyncReceive);
+        }
 
-        protected override void HandleReconnect() => Task.Run(async () =>
+        protected override void HandleReceivedPacket(object packet) => Task.Run(() => m_Protocol.TreatPacket(packet));
+
+        private async void ReconnectAsync()
         {
             uint tryCount = 0;
             var periodicTimer = new PeriodicTimer(Delay);
@@ -58,27 +62,28 @@ namespace CorpseLib.Network
                     return;
                 }
             }
-        });
+        }
 
-        public override void TestRead(BytesWriter bytesWriter) => Task.Run(() => TestReceived(bytesWriter));
+        protected override void HandleReconnect() => ReconnectAsync();
+
+        public override void TestRead(BytesWriter bytesWriter) => TestReceived(bytesWriter);
 
         public override List<object> Read() => [];
 
-        protected override void HandleActionAfterReconnect(Action action)
+        private async void ActionAfterReconnectAsync(Action action)
         {
-            Task.Run(async () =>
+            var periodicTimer = new PeriodicTimer(Delay);
+            while (await periodicTimer.WaitForNextTickAsync())
             {
-                var periodicTimer = new PeriodicTimer(Delay);
-                while (await periodicTimer.WaitForNextTickAsync())
+                if (!IsReconnecting())
                 {
-                    if (!IsReconnecting())
-                    {
-                        action();
-                        return;
-                    }
+                    action();
+                    return;
                 }
-            });
+            }
         }
+
+        protected override void HandleActionAfterReconnect(Action action) => ActionAfterReconnectAsync(action);
 
         public bool Start()
         {

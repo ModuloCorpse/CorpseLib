@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using CorpseLib.Logging;
+using System.Text;
 
 namespace CorpseLib.Network
 {
@@ -14,5 +15,6 @@ namespace CorpseLib.Network
         public void OnSend(object obj) => Console.WriteLine(string.Format("Sent: {0}", obj));
         public void OnSend(byte[] bytes) { }
         public void OnException(Exception ex) => Console.WriteLine(ex);
+        public void OnLog(string log) => Console.WriteLine(log);
     }
 }

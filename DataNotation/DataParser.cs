@@ -1,6 +1,6 @@
 ﻿namespace CorpseLib.DataNotation
 {
-    public class DataParser<TReader, TWriter, TFormat> where TReader : DataReader, new() where TWriter : DataWriter<TFormat>, new() where TFormat : DataFormat, new()
+    public class DataParser<TReader, TWriter, TFormat> where TReader : DataReader, new() where TWriter : DataWriter<TFormat>, new() where TFormat : StringBuilderFormat, new()
     {
         public static DataObject LoadFromFile(string path) => File.Exists(path) ? Parse(File.ReadAllText(path)) : throw new FileNotFoundException();
 

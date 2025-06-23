@@ -14,5 +14,6 @@ namespace CorpseLib.Network
         public void OnSend(object obj) => Console.WriteLine(string.Format("Sent to server: {0}", obj));
         public void OnSend(byte[] bytes) => Console.WriteLine(string.Format("Sent to server {0} bytes [UTF-8 : {1}]", bytes.Length, Encoding.UTF8.GetString(bytes)));
         public void OnException(Exception ex) => Console.WriteLine(ex);
+        public void OnLog(string log) => Console.WriteLine(log);
     }
 }

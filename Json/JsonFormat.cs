@@ -1,8 +1,6 @@
-﻿using CorpseLib.DataNotation;
-
-namespace CorpseLib.Json
+﻿namespace CorpseLib.Json
 {
-    public class JsonFormat() : DataFormat()
+    public class JsonFormat() : StringBuilderFormat()
     {
         public bool InlineScope = true;
     }

@@ -20,6 +20,7 @@ namespace CorpseLib.Network
         protected abstract void SetupSerializer(ref BytesSerializer serializer);
         protected virtual void OnDiscardException(Exception exception) { }
         protected void SetReadOnly(bool isReadOnly) => m_Client!.SetReadOnly(isReadOnly);
+        protected virtual void OnLog(string log) { }
 
         //====================INTERNAL====================\\
         internal void SetClient(ATCPClient client) => m_Client = client;
@@ -31,6 +32,7 @@ namespace CorpseLib.Network
         internal void ClientDisconnected() => OnClientDisconnected();
         internal void FillSerializer(ref BytesSerializer serializer) => SetupSerializer(ref serializer);
         internal void DiscardException(Exception exception) => OnDiscardException(exception);
+        internal void Log(string log) => OnLog(log);
 
         internal void InternalSend(object msg)
         {

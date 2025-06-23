@@ -17,5 +17,6 @@ namespace CorpseLib.Network
         public void OnSend(object obj) => m_Logger.Log("[MONITOR] Sent: ${0}", obj);
         public void OnSend(byte[] bytes) => m_Logger.Log("[MONITOR] Sent ${0} bytes [UTF-8 : ${1}]", bytes.Length, Encoding.UTF8.GetString(bytes));
         public void OnException(Exception ex) => m_Logger.Log("[MONITOR] Exception: ${0}", ex);
+        public void OnLog(string log) => m_Logger.Log("[MONITOR] Log: ${0}", log);
     }
 }

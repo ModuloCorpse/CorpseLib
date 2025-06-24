@@ -40,7 +40,7 @@ namespace CorpseLib.Network
             Task.Run(AsyncReceive);
         }
 
-        protected override void HandleReceivedPacket(object packet) => Task.Run(() => m_Protocol.TreatPacket(packet));
+        protected override void HandleReceivedPacket(object packet) => m_Protocol.TreatPacket(packet);
 
         private async void ReconnectAsync()
         {

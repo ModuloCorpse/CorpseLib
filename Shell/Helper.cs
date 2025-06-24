@@ -39,7 +39,7 @@ namespace CorpseLib.Shell
                         {
                             ++i;
                             if (!char.IsWhiteSpace(content[i]))
-                                return new("Command ill-formed", string.Format("String must be followed by a '{0}'", separator));
+                                return new("Command ill-formed", $"String must be followed by a '{separator}'");
                         }
                     }
                     else
@@ -62,7 +62,7 @@ namespace CorpseLib.Shell
                         foreach (char builderChar in builder.ToString())
                         {
                             if (!char.IsWhiteSpace(content[i]))
-                                return new("Command ill-formed", string.Format("String must follow a '{0}'", separator));
+                                return new("Command ill-formed", $"String must follow a '{separator}'");
                         }
                         builder.Clear();
                     }

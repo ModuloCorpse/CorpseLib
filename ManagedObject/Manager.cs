@@ -29,7 +29,7 @@ namespace CorpseLib.ManagedObject
         {
             if (m_Objects.Remove(id))
             {
-                File.Delete(string.Format("{0}/{1}.json", m_DirPath, id));
+                File.Delete($"{m_DirPath}/{id}.json");
                 if (m_CurrentObject != null && m_CurrentObject.ID == id)
                     m_CurrentObject = null;
             }
@@ -122,12 +122,12 @@ namespace CorpseLib.ManagedObject
             DataObject json = [];
             json.Add("current", m_CurrentObject?.ID ?? string.Empty);
             SaveSettings(ref json);
-            JsonParser.WriteToFile(string.Format("{0}/settings.json", m_DirPath), json);
+            JsonParser.WriteToFile($"{m_DirPath}/settings.json", json);
 
             foreach (var obj in m_Objects.Values)
             {
                 if (obj.IsSerializable())
-                    JsonParser.WriteToFile(string.Format("{0}/{1}.json", m_DirPath, obj.ID), obj.Serialize());
+                    JsonParser.WriteToFile($"{m_DirPath}/{obj.ID}.json", obj.Serialize());
             }
         }
 

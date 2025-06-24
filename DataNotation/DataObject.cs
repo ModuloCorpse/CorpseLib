@@ -41,7 +41,7 @@ namespace CorpseLib.DataNotation
         {
             if (TryGet(key, type, out object? ret))
                 return ret;
-            throw new DataException(string.Format("No node {0} in the JSON", key));
+            throw new DataException($"No node {key} in the JSON");
         }
 
         public T? Get<T>(string key) => (T?)Get(key, typeof(T));

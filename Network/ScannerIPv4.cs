@@ -96,7 +96,7 @@ namespace CorpseLib.Network
                         {
                             string[] dynamicRange = ipRange[1..^1].Split('-');
                             if (dynamicRange.Length != 2)
-                                throw new ArgumentException(string.Format("{0} is not a valid range", range));
+                                throw new ArgumentException($"{range} is not a valid range");
                             byte min = byte.Parse(dynamicRange[0]);
                             byte max = byte.Parse(dynamicRange[1]);
                             for (byte i = min; i < max; ++i)
@@ -117,7 +117,7 @@ namespace CorpseLib.Network
         {
             string[] ranges = scanRange.Split('.');
             if (ranges.Length != 4)
-                throw new ArgumentException(string.Format("{0} is not a valid scanner range", scanRange));
+                throw new ArgumentException($"{scanRange} is not a valid scanner range");
             m_FirstRange = GetRange(ranges[0]);
             m_SecondRange = GetRange(ranges[1]);
             m_ThirdRange = GetRange(ranges[2]);
@@ -148,7 +148,7 @@ namespace CorpseLib.Network
             ScannerData scannerData = new(ipTest);
             foreach (byte l in m_FourthRange)
             {
-                string ip = string.Format("{0}.{1}.{2}.{3}", i, j, k, l);
+                string ip = $"{i}.{j}.{k}.{l}";
                 Ping ping = new();
                 ping.PingCompleted += new PingCompletedEventHandler(PingCompleted);
                 scannerData.AddPing();

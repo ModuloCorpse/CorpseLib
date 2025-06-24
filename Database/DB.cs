@@ -91,7 +91,7 @@ namespace CorpseLib.Database
                 EntryReader reader = new(m_BytesSerializer, m_EntrySerializer, this, storedEntry.Content);
                 return m_EntrySerializer.Deserialize<T>(reader);
             }
-            return new("No such entry", string.Format("No entry {0} in the database", id));
+            return new("No such entry", $"No entry {id} in the database");
         }
 
         public void Save(string path) => File.WriteAllBytes(path, m_BytesSerializer.Serialize(this));

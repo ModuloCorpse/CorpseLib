@@ -25,7 +25,7 @@ namespace CorpseLib.Serialize
             //We get the serializer to avoid retrieving it for every item in list
             ABytesSerializer? serializer = (ABytesSerializer?)m_Serializer.GetSerializerFor(typeof(T));
             if (serializer == null)
-                return new("Read error", string.Format("No serializer found for {0}", typeof(T).Name));
+                return new("Read error", $"No serializer found for {typeof(T).Name}");
             for (int i = 0; i != count; i++)
             {
                 OperationResult<T> result = serializer.DeserializeObj(this).Cast<T>();

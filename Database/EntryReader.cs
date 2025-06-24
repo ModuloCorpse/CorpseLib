@@ -39,7 +39,7 @@ namespace CorpseLib.Database
                     return new(null);
                 byte[]? entryBytes = m_DB.GetEntry(entryID)?.Content;
                 if (entryBytes == null)
-                    return new("Bad link", string.Format("Link {0} does not exist in DB", entryID));
+                    return new("Bad link", $"Link {entryID} does not exist in DB");
                 EntryReader newReader = new(m_BytesReader.Serializer, m_EntrySerializer, m_DB, entryBytes);
                 OperationResult<object?> result = m_EntrySerializer.Deserialize(newReader, type);
                 if (result && result.Result is DBEntry entry)

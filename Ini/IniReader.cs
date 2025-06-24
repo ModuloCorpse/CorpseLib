@@ -31,7 +31,7 @@ namespace CorpseLib.Ini
                             hasRead = true;
                         }
                         else
-                            throw new IniException(string.Format("Invalid ini file: Invalid line {0}", i));
+                            throw new IniException($"Invalid ini file: Invalid line {i}");
                     }
                 }
             }

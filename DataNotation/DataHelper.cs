@@ -200,7 +200,7 @@ namespace CorpseLib.DataNotation
             DataObject ret = [];
             if (serializer.Serialize(item, ret))
                 return ret;
-            throw new DataException(string.Format("Cannot cast item : No know conversion from '{0}' to data node", itemType.Name));
+            throw new DataException($"Cannot cast item : No know conversion from '{itemType.Name}' to data node");
         }
 
         public static object? Flatten(DataNode node)

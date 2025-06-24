@@ -60,7 +60,7 @@ namespace CorpseLib.Shell
                 }
 
                 if (actionArgs[i] == null && arguments[i].Required)
-                    return new("Bad arguments", string.Format("Invalid argument at pos {0}", i));
+                    return new("Bad arguments", $"Invalid argument at pos {i}");
             }
 
             object?[] ret = m_Action.Call(actionArgs);

@@ -75,7 +75,7 @@ namespace CorpseLib.Ini
         {
             if (!string.IsNullOrEmpty(m_Name))
             {
-                writer.Append(string.Format("[{0}]", m_Name));
+                writer.Append($"[{m_Name}]");
                 writer.LineBreak();
             }
 
@@ -84,7 +84,7 @@ namespace CorpseLib.Ini
             {
                 if (i > 0)
                     writer.LineBreak();
-                writer.Append(string.Format("{0}={1}", pair.Key, pair.Value));
+                writer.Append($"{pair.Key}={pair.Value}");
                 ++i;
             }
         }

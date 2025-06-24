@@ -11,8 +11,8 @@ namespace CorpseLib.Network
         public void OnReopening() => Console.WriteLine("Connection reopening");
         public void OnReopen() => Console.WriteLine("Connection reopenned");
         public void OnReceive(byte[] bytes) { }
-        public void OnReceive(object obj) => Console.WriteLine(string.Format("Received: {0}", obj));
-        public void OnSend(object obj) => Console.WriteLine(string.Format("Sent: {0}", obj));
+        public void OnReceive(object obj) => Console.WriteLine($"Received: {obj}");
+        public void OnSend(object obj) => Console.WriteLine($"Sent: {obj}");
         public void OnSend(byte[] bytes) { }
         public void OnException(Exception ex) => Console.WriteLine(ex);
         public void OnLog(string log) => Console.WriteLine(log);

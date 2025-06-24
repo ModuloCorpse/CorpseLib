@@ -113,7 +113,7 @@ namespace CorpseLib.Cmon
                     .Replace("\f", "\\f")));
             }
             else if (value.Value is Guid guid)
-                Append(string.Format("\"{0}\"", guid));
+                Append($"\"{guid}\"");
             else if (value.Value is DateTime date)
                 Append(date.Ticks.ToString());
             else if (value.Value is TimeSpan timeSpan)
@@ -125,7 +125,7 @@ namespace CorpseLib.Cmon
                 if (c == '"')
                     Append("\"\\\"\"");
                 else
-                    Append(string.Format("\"{0}\"", c));
+                    Append($"\"{c}\"");
             }
             else if (value.Type.IsEnum)
                 Append(((int)Convert.ChangeType(value.Value, typeof(int))).ToString()!);

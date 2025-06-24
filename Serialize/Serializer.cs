@@ -156,7 +156,7 @@
             ASerializer<TReader, TWriter>? serializer = GetSerializerFor(type);
             if (serializer != null)
                 return serializer.DeserializeObj(reader);
-            return new("Serialization error", string.Format("No serializer found for type {0}", type.Name));
+            return new("Serialization error", $"No serializer found for type {type.Name}");
         }
 
         public bool Serialize(object obj, TWriter writer)
@@ -175,7 +175,7 @@
     {
         internal abstract string GetSerializerName();
         internal abstract Type GetSerializedType();
-        public override string ToString() => string.Format("{0}[{1}]", GetSerializerName(), GetSerializedType().Name);
+        public override string ToString() => $"{GetSerializerName()}[{GetSerializedType().Name}]";
     }
 
     public abstract class ASerializer<TReader, TWriter> : ASerializer

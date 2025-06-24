@@ -30,7 +30,7 @@
             if (!string.IsNullOrEmpty(m_Error))
             {
                 if (!string.IsNullOrEmpty(m_Description))
-                    return string.Format("{0}: {1}", m_Error, m_Description);
+                    return $"{m_Error}: {m_Description}";
                 return m_Error;
             }
             return string.Empty;
@@ -54,7 +54,7 @@
                     return new OperationResult<U>(default);
                 else if (m_Result is U?)
                     return new OperationResult<U>((U?)(object?)m_Result);
-                return new OperationResult<U>("Cast error", string.Format("Cannot cast from {0} to {1}", typeof(T).Name, typeof(U).Name));
+                return new OperationResult<U>("Cast error", $"Cannot cast from {typeof(T).Name} to {typeof(U).Name}");
             }
             return new OperationResult<U>(m_Error, m_Description);
         }

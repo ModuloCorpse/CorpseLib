@@ -32,6 +32,12 @@ namespace CorpseLib.Network
 
         public override List<object> Read()
         {
+            //TODO
+            if (m_Socket.Connected == false)
+            {
+                InternalDisconnect();
+                return [];
+            }
             m_Socket.ReceiveTimeout = m_ReadTimeout;
             byte[] readBuffer = new byte[1024];
             byte[] buffer = [];

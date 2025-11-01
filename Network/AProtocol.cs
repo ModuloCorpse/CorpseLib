@@ -52,7 +52,7 @@ namespace CorpseLib.Network
         public void Disconnect() => m_Client!.Disconnect();
         public void Connect() => m_Client!.Connect();
         public void Reconnect() => m_Client!.Reconnect();
-        public void SetMonitor(IMonitor monitor) => m_Client!.SetMonitor(monitor);
+        public void AddMonitor(IMonitor monitor) => m_Client!.AddMonitor(monitor);
         public void Send(object msg) => m_Client!.Send(msg);
         public void ForceSend(object msg) => m_Client!.ForceSend(msg);
         public BytesWriter CreateBytesWriter() => m_Client!.CreateBytesWriter();

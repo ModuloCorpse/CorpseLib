@@ -16,6 +16,8 @@ namespace CorpseLib.Logging
         private readonly string m_Format = format;
         private volatile bool m_Started = false;
 
+        public Logger(string format, bool started) : this(format) => m_Started = started;
+
         public void Start() => m_Started = true;
         public void Stop() => m_Started = false;
 

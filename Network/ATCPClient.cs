@@ -18,7 +18,7 @@ namespace CorpseLib.Network
         protected Stream m_Stream;
         private readonly BytesSerializer m_BytesSerializer = new();
         private readonly BytesReader m_BytesReader;
-        private IMonitor? m_Monitor = null;
+        private readonly MonitorBatch m_Monitor = [];
         private TimeSpan m_Delay = TimeSpan.Zero;
         private uint m_MaxNbTry = 1;
         private readonly int m_ID;
@@ -103,20 +103,20 @@ namespace CorpseLib.Network
         protected void Log(string log)
         {
             m_Protocol.Log(log);
-            m_Monitor?.OnLog(log);
+            m_Monitor.OnLog(log);
         }
 
         protected void DiscardException(Exception ex)
         {
             m_Protocol.DiscardException(ex);
-            m_Monitor?.OnException(ex);
+            m_Monitor.OnException(ex);
         }
 
-        public void SetMonitor(IMonitor monitor)
+        public void AddMonitor(IMonitor monitor)
         {
-            m_Monitor = monitor;
+            m_Monitor.Add(monitor);
             if (m_IsConnected)
-                m_Monitor?.OnOpen();
+                m_Monitor.OnOpen();
         }
 
         protected abstract void HandleActionAfterReconnect(Action action);
@@ -149,9 +149,9 @@ namespace CorpseLib.Network
             try
             {
                 if (!reconnect)
-                    m_Monitor?.OnOpening();
+                    m_Monitor.OnOpening();
                 else
-                    m_Monitor?.OnReopening();
+                    m_Monitor.OnReopening();
                 //Recreate socket and reset stream to allow reconnection
                 m_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 m_Stream = Stream.Null;
@@ -168,12 +168,12 @@ namespace CorpseLib.Network
                             if (!reconnect)
                             {
                                 m_Protocol.ClientConnected();
-                                m_Monitor?.OnOpen();
+                                m_Monitor.OnOpen();
                             }
                             else
                             {
                                 m_Protocol.ClientReconnected();
-                                m_Monitor?.OnReopen();
+                                m_Monitor.OnReopen();
                             }
                             m_IsConnected = true;
                             return true;
@@ -223,7 +223,7 @@ namespace CorpseLib.Network
 
         protected List<object> Received(byte[] readBuffer)
         {
-            m_Monitor?.OnReceive(readBuffer);
+            m_Monitor.OnReceive(readBuffer);
             m_BytesReader.Append(readBuffer);
             List<object> packets = [];
             do
@@ -237,7 +237,7 @@ namespace CorpseLib.Network
                     if (resultData != null)
                     {
                         packets.Add(resultData);
-                        m_Monitor?.OnReceive(resultData);
+                        m_Monitor.OnReceive(resultData);
                         HandleReceivedPacket(resultData);
                     }
                 }
@@ -285,19 +285,19 @@ namespace CorpseLib.Network
             if (m_IsReadOnly)
                 return;
 
-            m_Monitor?.OnSend(message);
+            m_Monitor.OnSend(message);
             m_Protocol.InternalSend(message);
         }
 
         internal void ForceSend(object message)
         {
-            m_Monitor?.OnSend(message);
+            m_Monitor.OnSend(message);
             m_Protocol.InternalSend(message);
         }
 
         internal void WriteToStream(byte[] message)
         {
-            m_Monitor?.OnSend(message);
+            m_Monitor.OnSend(message);
             try
             {
                 m_Stream.Write(message);
@@ -328,7 +328,7 @@ namespace CorpseLib.Network
                 m_Protocol.ClientDisconnected();
                 m_Socket.Close();
                 m_Stream.Close();
-                m_Monitor?.OnClose();
+                m_Monitor.OnClose();
                 return true;
             }
             return false;

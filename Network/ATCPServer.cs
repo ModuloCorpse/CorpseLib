@@ -7,20 +7,24 @@ namespace CorpseLib.Network
     /// <summary>
     /// Class representing an asynchronous TCP server
     /// </summary>
-    public abstract class ATCPServer
+    /// <remarks>
+    /// Create a TCP server on the specified <paramref name="port"/>
+    /// </remarks>
+    /// <param name="port">Port on which the server will listen</param>
+    public abstract class ATCPServer(ATCPServer.ProtocolFactory protocolFactory, int port)
     {
         public delegate AProtocol ProtocolFactory();
 
-        private readonly ProtocolFactory m_ProtocolFactory;
+        private readonly ProtocolFactory m_ProtocolFactory = protocolFactory;
         private readonly ConcurrentDictionary<int, ATCPClient> m_Clients = new();
         private readonly List<int> m_FreeIdx = [];
-        protected readonly Socket m_ServerSocket;
-        private IMonitor? m_Monitor = null;
+        protected readonly Socket m_ServerSocket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        private readonly MonitorBatch m_Monitor = [];
         private int m_CurrentIdx = 0;
-        private readonly int m_Port;
+        private readonly int m_Port = port;
         private volatile bool m_Running = false;
 
-        public void SetMonitor(IMonitor monitor) => m_Monitor = monitor;
+        public void AddMonitor(IMonitor monitor) => m_Monitor.Add(monitor);
 
         public bool IsRunning() => m_Running;
 
@@ -44,7 +48,7 @@ namespace CorpseLib.Network
             if (!m_Running)
                 return;
             if (m_Monitor != null)
-                client.SetMonitor(m_Monitor);
+                client.AddMonitor(m_Monitor);
             client.OnDisconnect += delegate (ATCPClient client)
             {
                 int clientID = client.GetID();
@@ -52,17 +56,6 @@ namespace CorpseLib.Network
                 m_FreeIdx.Add(clientID);
             };
             m_Clients[client.GetID()] = client;
-        }
-
-        /// <summary>
-        /// Create a TCP server on the specified <paramref name="port"/>
-        /// </summary>
-        /// <param name="port">Port on which the server will listen</param>
-        protected ATCPServer(ProtocolFactory protocolFactory, int port)
-        {
-            m_ProtocolFactory = protocolFactory;
-            m_ServerSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            m_Port = port;
         }
 
         public void Listen()

@@ -11,6 +11,7 @@ namespace CorpseLib.Network
     {
         public delegate void Callback(ATCPClient client);
         public event Callback? OnDisconnect;
+        public event Callback? OnUnwantedDisconnection;
 
         protected readonly AProtocol m_Protocol;
         private readonly URI m_URL;
@@ -180,7 +181,7 @@ namespace CorpseLib.Network
                         }
                         else
                         {
-                            InternalDisconnect();
+                            UnwantedDisconnection();
                         }
                     }
                 }
@@ -188,7 +189,7 @@ namespace CorpseLib.Network
             catch (Exception ex)
             {
                 DiscardException(ex);
-                InternalDisconnect();
+                UnwantedDisconnection();
             }
             return false;
         }
@@ -306,15 +307,16 @@ namespace CorpseLib.Network
             catch (Exception ex)
             {
                 DiscardException(ex);
-                InternalDisconnect();
+                UnwantedDisconnection();
             }
         }
 
         internal void SetStream(Stream stream) => m_Stream = stream;
         internal Stream GetStream() => m_Stream;
 
-        protected void InternalDisconnect()
+        protected void UnwantedDisconnection()
         {
+            OnUnwantedDisconnection?.Invoke(this);
             if (Disconnect())
                 InternalReconnect();
         }
@@ -336,6 +338,6 @@ namespace CorpseLib.Network
 
         public abstract bool IsAsynchronous();
 
-        ~ATCPClient() => InternalDisconnect();
+        ~ATCPClient() => Disconnect();
     }
 }

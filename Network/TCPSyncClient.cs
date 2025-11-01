@@ -35,7 +35,7 @@ namespace CorpseLib.Network
             //TODO
             if (m_Socket.Connected == false)
             {
-                InternalDisconnect();
+                UnwantedDisconnection();
                 return [];
             }
             m_Socket.ReceiveTimeout = m_ReadTimeout;
@@ -54,7 +54,7 @@ namespace CorpseLib.Network
             {
                 DiscardException(ex);
             }
-            InternalDisconnect();
+            UnwantedDisconnection();
             return [];
         }
 

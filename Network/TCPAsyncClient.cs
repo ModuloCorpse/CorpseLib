@@ -28,7 +28,7 @@ namespace CorpseLib.Network
                 catch (Exception ex)
                 {
                     DiscardException(ex);
-                    InternalDisconnect();
+                    UnwantedDisconnection();
                     return;
                 }
             }

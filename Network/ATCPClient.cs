@@ -316,9 +316,11 @@ namespace CorpseLib.Network
 
         protected void UnwantedDisconnection()
         {
-            OnUnwantedDisconnection?.Invoke(this);
             if (Disconnect())
+            {
                 InternalReconnect();
+                OnUnwantedDisconnection?.Invoke(this);
+            }
         }
 
         public bool Disconnect()

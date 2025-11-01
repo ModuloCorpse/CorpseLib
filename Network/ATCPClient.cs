@@ -318,8 +318,8 @@ namespace CorpseLib.Network
         {
             if (Disconnect())
             {
-                InternalReconnect();
                 OnUnwantedDisconnection?.Invoke(this);
+                InternalReconnect();
             }
         }
 

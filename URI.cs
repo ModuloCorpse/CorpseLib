@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace CorpseLib.Network
+namespace CorpseLib
 {
     /// <summary>
     /// Class representing a Uniform Resource Identifier
@@ -18,6 +18,17 @@ namespace CorpseLib.Network
             private string m_Fragment = string.Empty;
 
             internal Builder(string scheme) => m_Scheme = scheme;
+
+            internal Builder(URI uri)
+            {
+                m_Scheme = uri.Scheme;
+                m_UserInfo = uri.UserInfo;
+                m_Host = uri.Host;
+                m_Port = uri.Port;
+                m_Path = uri.Path;
+                m_Query = uri.Query;
+                m_Fragment = uri.Fragment;
+            }
 
             public Builder UserInfo(string userInfo)
             {
@@ -232,6 +243,7 @@ namespace CorpseLib.Network
 
         public static Builder Build() => new(string.Empty);
         public static Builder Build(string scheme) => new(scheme);
+        public static Builder Build(URI uri) => new(uri);
 
         public static URI Create(string host, int port) => new(string.Empty, new(string.Empty, host, port), string.Empty, string.Empty, string.Empty);
 

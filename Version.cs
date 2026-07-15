@@ -11,6 +11,24 @@ namespace CorpseLib
         private readonly string m_Prerelease;
         private readonly string m_Build;
 
+        public int Major => m_Major;
+        public int Minor => m_Minor;
+        public int Patch => m_Patch;
+        public string Prerelease => m_Prerelease;
+        public string Build => m_Build;
+
+        public Version(System.Version version)
+        {
+            m_Major = version.Major;
+            m_Minor = version.Minor;
+            m_Patch = version.Revision;
+            m_Prerelease = string.Empty;
+            if (version.Build != -1)
+                m_Build = version.Build.ToString();
+            else
+                m_Build = string.Empty;
+        }
+
         public Version(int major, int minor, int patch, string prerelease = "", string build = "")
         {
             m_Major = major;
@@ -18,6 +36,15 @@ namespace CorpseLib
             m_Patch = patch;
             m_Prerelease = prerelease;
             m_Build = build;
+        }
+
+        public Version(int major, int minor)
+        {
+            m_Major = major;
+            m_Minor = minor;
+            m_Patch = -1;
+            m_Prerelease = string.Empty;
+            m_Build = string.Empty;
         }
 
         public Version(string version)
@@ -42,14 +69,19 @@ namespace CorpseLib
             }
         }
 
+        public System.Version ToSystemVersion() => new(m_Major, m_Minor, m_Patch, int.TryParse(m_Build, out int build) ? build : 0);
+
         public override string ToString()
         {
             StringBuilder builder = new();
             builder.Append(m_Major);
             builder.Append('.');
             builder.Append(m_Minor);
-            builder.Append('.');
-            builder.Append(m_Patch);
+            if (m_Patch >= 0)
+            {
+                builder.Append('.');
+                builder.Append(m_Patch);
+            }
             if (!string.IsNullOrEmpty(m_Prerelease))
             {
                 builder.Append('-');

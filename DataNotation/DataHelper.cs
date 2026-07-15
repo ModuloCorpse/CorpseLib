@@ -1,5 +1,4 @@
-﻿using CorpseLib.Network;
-using System.Collections;
+﻿using System.Collections;
 
 namespace CorpseLib.DataNotation
 {

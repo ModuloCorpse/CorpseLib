@@ -1,6 +1,4 @@
-﻿using CorpseLib.Network;
-
-namespace CorpseLib.Serialize
+﻿namespace CorpseLib.Serialize
 {
     public abstract class ANativeSerializer<TSerial>
     {

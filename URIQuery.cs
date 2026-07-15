@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Text;
 
-namespace CorpseLib.Network
+namespace CorpseLib
 {
     public class URIQuery : IEnumerable<KeyValuePair<string, string>>
     {

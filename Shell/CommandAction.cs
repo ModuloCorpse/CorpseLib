@@ -14,7 +14,7 @@ namespace CorpseLib.Shell
 
         private readonly AAction m_Action = action;
 
-        protected override OperationResult<string> Execute(string[] args)
+        protected override async Task<OperationResult<string>> Execute(string[] args)
         {
             StringSerializer serializer = new();
             foreach (AStringSerializer registeredSerializer in ms_RegisteredSerializers.Values)
@@ -63,7 +63,7 @@ namespace CorpseLib.Shell
                     return new("Bad arguments", $"Invalid argument at pos {i}");
             }
 
-            object?[] ret = m_Action.Call(actionArgs);
+            object?[] ret = await m_Action.Call(actionArgs);
             if (ret.Length == 0 || ret[0] == null)
                 return new(string.Empty);
             return new(ret[0]!.ToString());

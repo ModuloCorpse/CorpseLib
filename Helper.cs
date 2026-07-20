@@ -98,5 +98,17 @@ namespace CorpseLib
         }
         public static string ToString(IDictionary dict) => ToString(dict, (key) => key.ToString() ?? string.Empty, (value) => value?.ToString() ?? string.Empty);
         public static string ToString(IDictionary dict, Func<object?, string> valueConverter) => ToString(dict, (key) => key.ToString() ?? string.Empty, valueConverter);
+
+        public static async Task CallAsyncEventHandler(AsyncEventHandler? handler)
+        {
+            if (handler != null)
+                await handler();
+        }
+
+        public static async Task CallAsyncEventHandler<TArgs>(AsyncEventHandler<TArgs>? handler, TArgs args)
+        {
+            if (handler != null)
+                await handler(args);
+        }
     }
 }

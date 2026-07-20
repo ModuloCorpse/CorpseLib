@@ -10,6 +10,6 @@ namespace CorpseLib.Actions
         public string ActionName => m_ActionDefinition.Name;
         public string ActionDescription => m_ActionDefinition.Description;
 
-        public abstract object?[] Call(object?[] args);
+        public abstract Task<object?[]> Call(object?[] args);
     }
 }

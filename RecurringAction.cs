@@ -1,24 +1,24 @@
 ﻿namespace CorpseLib
 {
-    public class RecurringAction(int refreshIntervalInMilliseconds)
+    public class RecurringAction(TimeSpan refreshInterval)
     {
-        public event EventHandler? OnStart;
-        public event EventHandler? OnUpdate;
-        public event EventHandler? OnStop;
+        public event AsyncEventHandler? OnStart;
+        public event AsyncEventHandler? OnUpdate;
+        public event AsyncEventHandler? OnStop;
 
-        private readonly int m_RefreshInterval = refreshIntervalInMilliseconds;
+        private readonly TimeSpan m_RefreshInterval = refreshInterval;
         private Task? m_RunningTask = null;
         private CancellationTokenSource m_CancellationToken = new();
         private volatile bool m_Running;
 
-        public int RefreshInterval => m_RefreshInterval;
+        public TimeSpan RefreshInterval => m_RefreshInterval;
         public bool Running => m_Running;
 
-        public void Start()
+        public async Task Start()
         {
             if (!m_Running)
             {
-                OnActionStart();
+                await OnActionStart();
                 m_CancellationToken = new();
                 m_RunningTask = Task.Run(LoopTask, m_CancellationToken.Token);
                 m_Running = true;
@@ -31,25 +31,25 @@
             {
                 await Task.Delay(m_RefreshInterval, m_CancellationToken.Token);
                 if (!m_CancellationToken.IsCancellationRequested)
-                    OnActionUpdate();
+                    await OnActionUpdate();
             }
         }
 
-        public void Stop()
+        public async Task Stop()
         {
             if (m_Running)
             {
                 m_CancellationToken?.Cancel();
                 m_Running = false;
                 m_RunningTask = null;
-                OnActionStop();
+                await OnActionStop();
             }
         }
 
-        protected virtual void OnActionStart() => OnStart?.Invoke(this, EventArgs.Empty);
-        protected virtual void OnActionUpdate() => OnUpdate?.Invoke(this, EventArgs.Empty);
-        protected virtual void OnActionStop() => OnStop?.Invoke(this, EventArgs.Empty);
+        protected virtual async Task OnActionStart() => await Helper.CallAsyncEventHandler(OnStart);
+        protected virtual async Task OnActionUpdate() => await Helper.CallAsyncEventHandler(OnUpdate);
+        protected virtual async Task OnActionStop() => await Helper.CallAsyncEventHandler(OnStop);
 
-        ~RecurringAction() => Stop();
+        ~RecurringAction() => _ = Stop();
     }
 }

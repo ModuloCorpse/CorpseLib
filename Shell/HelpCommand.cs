@@ -6,7 +6,7 @@ namespace CorpseLib.Shell
     {
         private readonly CLI m_CLI = cli;
 
-        protected override OperationResult<string> Execute(string[] args)
+        protected override async Task<OperationResult<string>> Execute(string[] args)
         {
             StringBuilder sb = new();
             if (args.Length == 0)

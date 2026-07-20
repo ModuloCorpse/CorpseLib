@@ -6,7 +6,7 @@
         private readonly string m_Description = description;
         public string Name => m_Name;
         public string Description => m_Description;
-        internal OperationResult<string> Call(string[] args) => Execute(args);
-        protected abstract OperationResult<string> Execute(string[] args);
+        internal async Task<OperationResult<string>> Call(string[] args) => await Execute(args);
+        protected abstract Task<OperationResult<string>> Execute(string[] args);
     }
 }

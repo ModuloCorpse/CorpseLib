@@ -2,97 +2,149 @@
 {
     public class Canal(bool isAsync = false)
     {
-        private readonly List<Action> m_TriggerListeners = [];
-        private readonly object m_Lock = new();
+        private readonly List<Action> m_MessageListeners = [];
+        private readonly List<Func<Task>> m_AsyncMessageListeners = [];
+        private readonly Lock m_MessageListenersLock = new();
+        private readonly Lock m_AsyncMessageListenersLock = new();
         private readonly bool m_IsAsync = isAsync;
 
         public void Register(Action listener)
         {
-            lock (m_Lock)
-            {
-                m_TriggerListeners.Add(listener);
-            }
+            m_MessageListenersLock.Enter();
+            m_MessageListeners.Add(listener);
+            m_MessageListenersLock.Exit();
+        }
+
+        public void Register(Func<Task> listener)
+        {
+            m_AsyncMessageListenersLock.Enter();
+            m_AsyncMessageListeners.Add(listener);
+            m_AsyncMessageListenersLock.Exit();
         }
 
         public void Unregister(Action listener)
         {
-            lock (m_Lock)
-            {
-                m_TriggerListeners.Remove(listener);
-            }
+            m_MessageListenersLock.Enter();
+            m_MessageListeners.Remove(listener);
+            m_MessageListenersLock.Exit();
         }
 
-        private void InternalTrigger()
+        public void Unregister(Func<Task> listener)
         {
-            lock (m_Lock)
-            {
-                foreach (Action listener in m_TriggerListeners)
-                    listener();
-            }
+            m_AsyncMessageListenersLock.Enter();
+            m_AsyncMessageListeners.Remove(listener);
+            m_AsyncMessageListenersLock.Exit();
         }
 
-        public void Trigger()
+        private async Task InternalTrigger()
+        {
+            m_MessageListenersLock.Enter();
+            foreach (Action listener in m_MessageListeners)
+                listener();
+            m_MessageListenersLock.Exit();
+
+            m_AsyncMessageListenersLock.Enter();
+            foreach (Func<Task> listener in m_AsyncMessageListeners)
+            {
+                if (m_IsAsync)
+                    _ = listener();
+                else
+                    await listener();
+            }
+            m_AsyncMessageListenersLock.Exit();
+        }
+
+        public async Task Trigger()
         {
             if (m_IsAsync)
-                Task.Run(InternalTrigger);
+                _ = InternalTrigger();
             else
-                InternalTrigger();
+                await InternalTrigger();
         }
 
         public void Clear()
         {
-            lock (m_Lock)
-            {
-                m_TriggerListeners.Clear();
-            }
+            m_MessageListenersLock.Enter();
+            m_MessageListeners.Clear();
+            m_MessageListenersLock.Exit();
+
+            m_AsyncMessageListenersLock.Enter();
+            m_AsyncMessageListeners.Clear();
+            m_AsyncMessageListenersLock.Exit();
         }
     }
 
     public class Canal<TEventType>(bool isAsync = false)
     {
         private readonly List<Action<TEventType?>> m_MessageListeners = [];
-        private readonly object m_Lock = new();
+        private readonly List<Func<TEventType?, Task>> m_AsyncMessageListeners = [];
+        private readonly Lock m_MessageListenersLock = new();
+        private readonly Lock m_AsyncMessageListenersLock = new();
         private readonly bool m_IsAsync = isAsync;
 
         public void Register(Action<TEventType?> listener)
         {
-            lock (m_Lock)
-            {
-                m_MessageListeners.Add(listener);
-            }
+            m_MessageListenersLock.Enter();
+            m_MessageListeners.Add(listener);
+            m_MessageListenersLock.Exit();
+        }
+
+        public void Register(Func<TEventType?, Task> listener)
+        {
+            m_AsyncMessageListenersLock.Enter();
+            m_AsyncMessageListeners.Add(listener);
+            m_AsyncMessageListenersLock.Exit();
         }
 
         public void Unregister(Action<TEventType?> listener)
         {
-            lock (m_Lock)
-            {
-                m_MessageListeners.Remove(listener);
-            }
+            m_MessageListenersLock.Enter();
+            m_MessageListeners.Remove(listener);
+            m_MessageListenersLock.Exit();
         }
 
-        private void InternalEmit(TEventType? arg)
+        public void Unregister(Func<TEventType?, Task> listener)
         {
-            lock (m_Lock)
-            {
-                foreach (Action<TEventType?> listener in m_MessageListeners)
-                    listener(arg);
-            }
+            m_AsyncMessageListenersLock.Enter();
+            m_AsyncMessageListeners.Remove(listener);
+            m_AsyncMessageListenersLock.Exit();
         }
 
-        public void Emit(TEventType? arg)
+        private async Task InternalEmit(TEventType? arg)
+        {
+            m_MessageListenersLock.Enter();
+            foreach (Action<TEventType?> listener in m_MessageListeners)
+                listener(arg);
+            m_MessageListenersLock.Exit();
+
+            m_AsyncMessageListenersLock.Enter();
+            foreach (Func<TEventType?, Task> listener in m_AsyncMessageListeners)
+            {
+                if (m_IsAsync)
+                    _ = listener(arg);
+                else
+                    await listener(arg);
+            }
+            m_AsyncMessageListenersLock.Exit();
+        }
+
+        public async Task Emit(TEventType? arg)
         {
             if (m_IsAsync)
-                Task.Run(() => InternalEmit(arg));
+                _ = InternalEmit(arg);
             else
-                InternalEmit(arg);
+                await InternalEmit(arg);
         }
 
         public void Clear()
         {
-            lock (m_Lock)
-            {
-                m_MessageListeners.Clear();
-            }
+            m_MessageListenersLock.Enter();
+            m_MessageListeners.Clear();
+            m_MessageListenersLock.Exit();
+
+            m_AsyncMessageListenersLock.Enter();
+            m_AsyncMessageListeners.Clear();
+            m_AsyncMessageListenersLock.Exit();
         }
     }
 }

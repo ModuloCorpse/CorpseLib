@@ -13,7 +13,8 @@ namespace CorpseLib.Encryption
         {
             byte[] salt = RandomNumberGenerator.GetBytes(SaltSize);
             byte[] iv = RandomNumberGenerator.GetBytes(IVSize);
-            byte[] key = new Rfc2898DeriveBytes(m_Password, salt, 10000, HashAlgorithmName.SHA256).GetBytes(KeySize);
+
+            byte[] key = Rfc2898DeriveBytes.Pbkdf2(m_Password, salt, 10000, HashAlgorithmName.SHA256, KeySize);
             using Aes aesAlg = Aes.Create();
             aesAlg.Mode = CipherMode.CBC;
             byte[] encryptedData = aesAlg.CreateEncryptor(key, iv).TransformFinalBlock(data, 0, data.Length);
@@ -28,7 +29,7 @@ namespace CorpseLib.Encryption
         {
             byte[] salt = new byte[SaltSize];
             Array.Copy(data, 0, salt, 0, salt.Length);
-            byte[] key = new Rfc2898DeriveBytes(m_Password, salt, 10000, HashAlgorithmName.SHA256).GetBytes(KeySize);
+            byte[] key = Rfc2898DeriveBytes.Pbkdf2(m_Password, salt, 10000, HashAlgorithmName.SHA256, KeySize);
             using Aes aesAlg = Aes.Create();
             aesAlg.Mode = CipherMode.CBC;
             byte[] iv = new byte[IVSize];

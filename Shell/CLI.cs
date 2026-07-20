@@ -17,7 +17,7 @@ namespace CorpseLib.Shell
             return true;
         }
 
-        public OperationResult<string> Execute(string command)
+        public async Task<OperationResult<string>> Execute(string command)
         {
             OperationResult<List<string>> splitResult = Helper.SplitCommand(command);
             if (!splitResult)
@@ -34,7 +34,7 @@ namespace CorpseLib.Shell
                     return new("Command ill-formed", $"Command '{commandName}' doesn't start with {m_Prefix}");
             }
             if (m_Commands.TryGetValue(commandName, out Command? cmd))
-                return cmd.Call(args[1..]);
+                return await cmd.Call(args[1..]);
             else
                 return new("Unknown command", $"Unknown command {commandName}");
         }

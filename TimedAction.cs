@@ -4,10 +4,10 @@ namespace CorpseLib
 {
     public class TimedAction
     {
-        public event EventHandler? OnStart;
-        public event EventHandler<TimeSpan>? OnUpdate;
-        public event EventHandler? OnStop;
-        public event EventHandler? OnFinish;
+        public event AsyncEventHandler? OnStart;
+        public event AsyncEventHandler<TimeSpan>? OnUpdate;
+        public event AsyncEventHandler? OnStop;
+        public event AsyncEventHandler? OnFinish;
 
         private readonly Stopwatch m_StopWatch = new();
         private TimeSpan m_Duration;
@@ -33,46 +33,46 @@ namespace CorpseLib
         public void SetDuration(TimeSpan duration) => m_Duration = duration;
         public void SetRefreshInterval(TimeSpan refreshInterval) => m_RefreshInterval = refreshInterval;
 
-        public void Start()
+        public async Task Start()
         {
-            OnActionStart();
+            await OnActionStart();
             m_StopWatch.Start();
-            Task.Run(NextLoop);
+            _ = Task.Run(NextLoop);
             m_Running = true;
         }
 
-        private void NextLoop()
+        private async Task NextLoop()
         {
             Thread.Sleep(m_RefreshInterval);
             if (m_Running)
-                Update();
+                await Update();
         }
 
-        private void Update()
+        private async Task Update()
         {
             TimeSpan ellapsed = TimeSpan.FromMilliseconds(m_StopWatch.ElapsedMilliseconds);
-            OnActionUpdate(ellapsed);
+            await OnActionUpdate(ellapsed);
             if (m_Duration >= TimeSpan.Zero && ellapsed >= m_Duration)
             {
                 m_Running = false;
                 m_StopWatch.Stop();
-                OnActionFinish();
+                await OnActionFinish();
             }
             else
-                Task.Run(NextLoop);
+                _ = Task.Run(NextLoop);
         }
 
-        public void Stop()
+        public async Task Stop()
         {
             m_Running = false;
             m_StopWatch.Stop();
             m_StopWatch.Reset();
-            OnActionStop();
+            await OnActionStop();
         }
 
-        protected virtual void OnActionStart() => OnStart?.Invoke(this, EventArgs.Empty);
-        protected virtual void OnActionUpdate(TimeSpan ellapsed) => OnUpdate?.Invoke(this, ellapsed);
-        protected virtual void OnActionStop() => OnStop?.Invoke(this, EventArgs.Empty);
-        protected virtual void OnActionFinish() => OnFinish?.Invoke(this, EventArgs.Empty);
+        protected virtual async Task OnActionStart() => await Helper.CallAsyncEventHandler(OnStart);
+        protected virtual async Task OnActionUpdate(TimeSpan ellapsed) => await Helper.CallAsyncEventHandler(OnUpdate, ellapsed);
+        protected virtual async Task OnActionStop() => await Helper.CallAsyncEventHandler(OnStop);
+        protected virtual async Task OnActionFinish() => await Helper.CallAsyncEventHandler(OnFinish);
     }
 }

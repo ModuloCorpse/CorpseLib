@@ -9,14 +9,14 @@ namespace CorpseLib.Actions
 
         public void Add(AAction action) => m_Actions[action.ActionName] = action;
 
-        public object?[] Call(string actionName, params object?[] args)
+        public async Task<object?[]> Call(string actionName, params object?[] args)
         {
             if (m_Actions.TryGetValue(actionName, out AAction? action))
-                return action.Call(args);
+                return await action.Call(args);
             return [];
         }
 
-        public object?[] SafeCall(string actionName, params object?[] args)
+        public async Task<object?[]> SafeCall(string actionName, params object?[] args)
         {
             if (m_Actions.TryGetValue(actionName, out AAction? action))
             {
@@ -60,12 +60,12 @@ namespace CorpseLib.Actions
                     }
                 }
 
-                return action.Call(actionArgs);
+                return await action.Call(actionArgs);
             }
             return [];
         }
 
-        public object?[] Call(string actionName, Dictionary<string, object?> args)
+        public async Task<object?[]> Call(string actionName, Dictionary<string, object?> args)
         {
             if (m_Actions.TryGetValue(actionName, out AAction? action))
             {
@@ -107,7 +107,7 @@ namespace CorpseLib.Actions
                     }
                 }
 
-                return action.Call(actionArgs);
+                return await action.Call(actionArgs);
             }
             return [];
         }

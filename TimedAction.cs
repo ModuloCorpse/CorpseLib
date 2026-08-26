@@ -6,6 +6,7 @@ namespace CorpseLib
     {
         public event AsyncEventHandler? OnStart;
         public event AsyncEventHandler<TimeSpan>? OnUpdate;
+        public event AsyncEventHandler? OnPause;
         public event AsyncEventHandler? OnStop;
         public event AsyncEventHandler? OnFinish;
 
@@ -13,10 +14,12 @@ namespace CorpseLib
         private TimeSpan m_Duration;
         private TimeSpan m_RefreshInterval;
         private volatile bool m_Running;
+        private volatile bool m_Paused;
 
         public TimeSpan Duration => m_Duration;
         public TimeSpan RefreshInterval => m_RefreshInterval;
         public bool Running => m_Running;
+        public bool Paused => m_Paused;
 
         public TimedAction(TimeSpan refreshInterval)
         {
@@ -35,10 +38,13 @@ namespace CorpseLib
 
         public async Task Start()
         {
+            if (m_Running)
+                return;
             await OnActionStart();
             m_StopWatch.Start();
             _ = Task.Run(NextLoop);
             m_Running = true;
+            m_Paused = false;
         }
 
         private async Task NextLoop()
@@ -46,6 +52,16 @@ namespace CorpseLib
             Thread.Sleep(m_RefreshInterval);
             if (m_Running)
                 await Update();
+        }
+
+        public async Task Pause()
+        {
+            if (!m_Running)
+                return;
+            m_Running = false;
+            m_Paused = true;
+            m_StopWatch.Stop();
+            await OnActionPaused();
         }
 
         private async Task Update()
@@ -64,7 +80,10 @@ namespace CorpseLib
 
         public async Task Stop()
         {
+            if (!m_Running)
+                return;
             m_Running = false;
+            m_Paused = false;
             m_StopWatch.Stop();
             m_StopWatch.Reset();
             await OnActionStop();
@@ -72,6 +91,7 @@ namespace CorpseLib
 
         protected virtual async Task OnActionStart() => await Helper.CallAsyncEventHandler(OnStart);
         protected virtual async Task OnActionUpdate(TimeSpan ellapsed) => await Helper.CallAsyncEventHandler(OnUpdate, ellapsed);
+        protected virtual async Task OnActionPaused() => await Helper.CallAsyncEventHandler(OnPause);
         protected virtual async Task OnActionStop() => await Helper.CallAsyncEventHandler(OnStop);
         protected virtual async Task OnActionFinish() => await Helper.CallAsyncEventHandler(OnFinish);
     }

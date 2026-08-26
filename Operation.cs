@@ -27,6 +27,12 @@
 
         public abstract void SetError(string error, string description);
 
+        public async Task<bool> AsyncWait()
+        {
+            await m_Task.Task;
+            return m_Task.Task.Result;
+        }
+
         public bool Wait()
         {
             m_Task.Task.Wait();

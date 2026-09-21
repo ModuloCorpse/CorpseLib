@@ -21,29 +21,31 @@ namespace CorpseLib.StructuredText
 
         public bool IsEmpty => m_Sections.Count == 0;
 
+        private Section AddAndReturn(Section section) { m_Sections.Add(section); return section; }
         public void Add(Section section) => m_Sections.Add(section);
-        public void AddText(string text) { if (!string.IsNullOrEmpty(text)) m_Sections.Add(new TextSection(text)); }
-        public void AddText(string text, Dictionary<string, object> properties) { if (!string.IsNullOrEmpty(text)) m_Sections.Add(new TextSection(text, properties)); }
-        public void AddImage(string url) => m_Sections.Add(new ImageSection(url));
-        public void AddImage(string url, string alt) => m_Sections.Add(new ImageSection(url, alt));
-        public void AddImage(string url, Dictionary<string, object> properties) => m_Sections.Add(new ImageSection(url, properties));
-        public void AddImage(string url, string alt, Dictionary<string, object> properties) => m_Sections.Add(new ImageSection(url, alt, properties));
-        public void AddAnimatedImage(string url) => m_Sections.Add(new AnimatedImageSection(url));
-        public void AddAnimatedImage(string url, string alt) => m_Sections.Add(new AnimatedImageSection(url, alt));
-        public void AddAnimatedImage(string url, Dictionary<string, object> properties) => m_Sections.Add(new AnimatedImageSection(url, properties));
-        public void AddAnimatedImage(string url, string alt, Dictionary<string, object> properties) => m_Sections.Add(new AnimatedImageSection(url, alt, properties));
+        public Section AddText(string text) => AddAndReturn(new TextSection(text));
+        public Section AddText(string text, Dictionary<string, object> properties) => AddAndReturn(new TextSection(text, properties));
+        public Section AddImage(string url) => AddAndReturn(new ImageSection(url));
+        public Section AddImage(string url, string alt) => AddAndReturn(new ImageSection(url, alt));
+        public Section AddImage(string url, Dictionary<string, object> properties) => AddAndReturn(new ImageSection(url, properties));
+        public Section AddImage(string url, string alt, Dictionary<string, object> properties) => AddAndReturn(new ImageSection(url, alt, properties));
+        public Section AddAnimatedImage(string url) => AddAndReturn(new AnimatedImageSection(url));
+        public Section AddAnimatedImage(string url, string alt) => AddAndReturn(new AnimatedImageSection(url, alt));
+        public Section AddAnimatedImage(string url, Dictionary<string, object> properties) => AddAndReturn(new AnimatedImageSection(url, properties));
+        public Section AddAnimatedImage(string url, string alt, Dictionary<string, object> properties) => AddAndReturn(new AnimatedImageSection(url, alt, properties));
 
+        private Section AddFirstAndReturn(Section section) { m_Sections.Insert(0, section); return section; }
         public void AddFirst(Section section) => m_Sections.Insert(0, section);
-        public void AddTextFirst(string text) => m_Sections.Insert(0, new TextSection(text));
-        public void AddTextFirst(string text, Dictionary<string, object> properties) => m_Sections.Insert(0, new TextSection(text, properties));
-        public void AddImageFirst(string url) => m_Sections.Insert(0, new ImageSection(url));
-        public void AddImageFirst(string url, string alt) => m_Sections.Insert(0, new ImageSection(url, alt));
-        public void AddImageFirst(string url, Dictionary<string, object> properties) => m_Sections.Insert(0, new ImageSection(url, properties));
-        public void AddImageFirst(string url, string alt, Dictionary<string, object> properties) => m_Sections.Insert(0, new ImageSection(url, alt, properties));
-        public void AddAnimatedImageFirst(string url) => m_Sections.Insert(0, new AnimatedImageSection(url));
-        public void AddAnimatedImageFirst(string url, string alt) => m_Sections.Insert(0, new AnimatedImageSection(url, alt));
-        public void AddAnimatedImageFirst(string url, Dictionary<string, object> properties) => m_Sections.Insert(0, new AnimatedImageSection(url, properties));
-        public void AddAnimatedImageFirst(string url, string alt, Dictionary<string, object> properties) => m_Sections.Insert(0, new AnimatedImageSection(url, alt, properties));
+        public Section AddTextFirst(string text) => AddFirstAndReturn(new TextSection(text));
+        public Section AddTextFirst(string text, Dictionary<string, object> properties) => AddFirstAndReturn(new TextSection(text, properties));
+        public Section AddImageFirst(string url) => AddFirstAndReturn(new ImageSection(url));
+        public Section AddImageFirst(string url, string alt) => AddFirstAndReturn(new ImageSection(url, alt));
+        public Section AddImageFirst(string url, Dictionary<string, object> properties) => AddFirstAndReturn(new ImageSection(url, properties));
+        public Section AddImageFirst(string url, string alt, Dictionary<string, object> properties) => AddFirstAndReturn(new ImageSection(url, alt, properties));
+        public Section AddAnimatedImageFirst(string url) => AddFirstAndReturn(new AnimatedImageSection(url));
+        public Section AddAnimatedImageFirst(string url, string alt) => AddFirstAndReturn(new AnimatedImageSection(url, alt));
+        public Section AddAnimatedImageFirst(string url, Dictionary<string, object> properties) => AddFirstAndReturn(new AnimatedImageSection(url, properties));
+        public Section AddAnimatedImageFirst(string url, string alt, Dictionary<string, object> properties) => AddFirstAndReturn(new AnimatedImageSection(url, alt, properties));
 
         public void Append(Text text) => m_Sections.AddRange(text.m_Sections);
 

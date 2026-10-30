@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace CorpseLib
 {
@@ -247,6 +248,20 @@ namespace CorpseLib
 
         public static URI Create(string host, int port) => new(string.Empty, new(string.Empty, host, port), string.Empty, string.Empty, string.Empty);
 
+        public static bool TryParse(string? url, [NotNullWhen(true)] out URI? uri)
+        {
+            try
+            {
+                uri = NullParse(url);
+                return uri != null;
+            }
+            catch
+            {
+                uri = null;
+                return false;
+            }
+        }
+
         public static URI? TryParse(string? url)
         {
             try
@@ -433,6 +448,8 @@ namespace CorpseLib
             }
             if (m_Authority != null)
                 builder.Append(m_Authority.ToString());
+            if (!string.IsNullOrEmpty(m_Path) && !m_Path.StartsWith('/'))
+                builder.Append('/');
             builder.Append(m_Path);
             if (!string.IsNullOrEmpty(m_Query))
             {

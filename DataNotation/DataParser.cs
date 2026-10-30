@@ -10,6 +10,7 @@
             reader.SetContent(content);
             return reader.Read();
         }
+
         public static T? Parse<T>(string content)
         {
             try

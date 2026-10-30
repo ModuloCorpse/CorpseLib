@@ -1,8 +1,10 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace CorpseLib
 {
+    //Represent a version like 1.2.3-alpha+001
     public class Version
     {
         private readonly int m_Major;
@@ -67,6 +69,35 @@ namespace CorpseLib
                 m_Prerelease = string.Empty;
                 m_Build = string.Empty;
             }
+        }
+
+        public static Version Parse(string version)
+        {
+            if (TryParse(version, out Version? result))
+                return result;
+            throw new FormatException($"Invalid version string: {version}");
+        }
+
+        public static bool TryParse(string version, [NotNullWhen(true)] out Version? result)
+        {
+            try
+            {
+                string pattern = @"^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$";
+                Match match = Regex.Match(version, pattern);
+                if (match.Success)
+                {
+                    int major = int.Parse(match.Groups["major"].Value);
+                    int minor = int.Parse(match.Groups["minor"].Value);
+                    int patch = int.Parse(match.Groups["patch"].Value);
+                    string prerelease = match.Groups["prerelease"].Value;
+                    string build = match.Groups["buildmetadata"].Value;
+                    result = new Version(major, minor, patch, prerelease, build);
+                    return true;
+                }
+            } catch { }
+
+            result = null;
+            return false;
         }
 
         public System.Version ToSystemVersion() => new(m_Major, m_Minor, m_Patch, int.TryParse(m_Build, out int build) ? build : 0);
